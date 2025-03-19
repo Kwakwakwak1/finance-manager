@@ -1,0 +1,66 @@
+.income-manager-card {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  border: none;
+}
+
+.income-manager-card .card-title {
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.75rem;
+}
+
+.income-manager-card .table {
+  font-size: 0.9rem;
+}
+
+.income-manager-card .table th {
+  background-color: #f8f9fa;
+}
+
+.income-manager-card .badge {
+  font-size: 0.7rem;
+  font-weight: normal;
+}
+
+.income-manager-card .card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eee;
+}
+
+.income-manager-card .card-header h5 {
+  margin-bottom: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.income-manager-card tfoot {
+  font-weight: bold;
+}
+
+.income-manager-card tfoot th {
+  background-color: #f0f0f0;
+}
+
+/* Form styles */
+.income-manager-card .form-label {
+  font-weight: 500;
+}
+
+.income-manager-card .form-control:focus,
+.income-manager-card .form-select:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Modal styles */
+.modal-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-title {
+  font-weight: 600;
+} 

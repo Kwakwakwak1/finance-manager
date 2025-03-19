@@ -1,3 +1,53 @@
+/* General Styles */
+body {
+  background-color: #f8f9fa;
+  color: #343a40;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-container {
+  flex: 1;
+  padding-bottom: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Footer */
+.footer {
+  background-color: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  padding: 1rem 0;
+  margin-top: 2rem;
+}
+
+.footer p {
+  margin-bottom: 0;
+}
+
 .App {
   text-align: center;
 }
@@ -34,5 +84,41 @@
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Tab styling */
+.nav-tabs {
+  border-bottom: 2px solid #e9ecef;
+  margin-bottom: 1.5rem;
+}
+
+.nav-tabs .nav-link {
+  border: none;
+  color: #6c757d;
+  font-weight: 500;
+  padding: 0.75rem 1.25rem;
+  margin-right: 0.5rem;
+  transition: all 0.2s;
+}
+
+.nav-tabs .nav-link:hover {
+  color: #007bff;
+  background-color: rgba(0, 123, 255, 0.05);
+  border-color: transparent;
+}
+
+.nav-tabs .nav-link.active {
+  color: #007bff;
+  background-color: transparent;
+  border-bottom: 2px solid #007bff;
+  border-color: transparent transparent #007bff transparent;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .nav-tabs .nav-link {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
   }
 }

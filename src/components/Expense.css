@@ -1,0 +1,44 @@
+.expense-card {
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.expense-card:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.expense-card.inactive {
+  opacity: 0.6;
+  background-color: #f8f9fa;
+}
+
+.expense-actions {
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .expense-card .card-body {
+    flex-direction: column;
+  }
+  
+  .expense-actions {
+    margin-top: 15px;
+    justify-content: flex-start;
+  }
+}
+
+.frequency-badge {
+  font-size: 0.85rem;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.card-title {
+  margin-bottom: 0.5rem;
+}
+
+.card-title .badge {
+  font-weight: normal;
+  font-size: 0.75rem;
+} 

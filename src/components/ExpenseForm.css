@@ -1,0 +1,38 @@
+.expense-form-card {
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border-top: 4px solid #007bff;
+}
+
+.expense-form-card:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.expense-form-card .card-title {
+  color: #007bff;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.expense-form-card label {
+  font-weight: 500;
+  color: #495057;
+}
+
+.expense-form-card .form-control:focus,
+.expense-form-card .form-select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.expense-form-card .btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+  padding: 0.5rem 1.5rem;
+}
+
+.expense-form-card .btn-primary:hover {
+  background-color: #0069d9;
+  border-color: #0062cc;
+} 

@@ -1,0 +1,50 @@
+.filter-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  background-color: #f8f9fa;
+  border-left: 4px solid #17a2b8;
+}
+
+.expense-list {
+  margin-bottom: 2rem;
+}
+
+.total-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+  border-left: 4px solid #007bff;
+}
+
+.total-card h3 {
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.total-card p {
+  margin-bottom: 0;
+  color: #6c757d;
+}
+
+.total-card .text-primary {
+  font-weight: bold;
+}
+
+.empty-state {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  padding: 3rem !important;
+}
+
+.empty-state h4 {
+  color: #6c757d;
+  margin-bottom: 1rem;
+}
+
+.empty-state p {
+  color: #adb5bd;
+} 
