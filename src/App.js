@@ -48,7 +48,7 @@ function App() {
         setError(null);
       } catch (err) {
         console.error('Error fetching data from API:', err);
-        setError('Failed to load data from server. Using local storage as fallback.');
+        setError('Oopss!!! Failed to load data from server. Using local storage as fallback.');
         setApiConnected(false);
         
         // Fallback to localStorage if API fails
@@ -444,7 +444,7 @@ function App() {
           {!apiConnected && (
             <Alert variant="info">
               <i className="bi bi-exclamation-triangle-fill me-2"></i>
-              Operating in offline mode. Changes will be saved to local storage only.
+              Oopssss!! Operating in offline mode. Changes will be saved to local storage only.
             </Alert>
           )}
           
