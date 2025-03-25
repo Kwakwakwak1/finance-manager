@@ -1,38 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Row, Col, Form, InputGroup, Button, Card } from 'react-bootstrap';
 import Expense from './Expense';
 import { calculateMonthlyAmount } from '../data/expenseData';
+import { useFilter } from '../context/FilterContext';
 import './ExpenseList.css';
 
 const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterActive, setFilterActive] = useState('all');
-  const [filterPerson, setFilterPerson] = useState('');
   const [sortBy, setSortBy] = useState('date');
   const [sortDirection, setSortDirection] = useState('desc');
   const [showMonthlyEquivalent, setShowMonthlyEquivalent] = useState(false);
 
+  // Use the global filter context
+  const { 
+    selectedUsers, 
+    availableUsers, 
+    handleUserFilterChange, 
+    handleSelectAllUsers,
+    filterDataBySelectedUsers,
+    updateAvailableUsers
+  } = useFilter();
+
+  // Update available users when expenses change
+  useEffect(() => {
+    if (expenses.length > 0) {
+      updateAvailableUsers(expenses, []);
+    }
+  }, [expenses, updateAvailableUsers]);
+
   // Get unique categories from expenses
   const categories = [...new Set(expenses.map(expense => expense.category))];
-  
-  // Get unique persons from expenses
-  const persons = [...new Set(expenses.filter(expense => expense.person).map(expense => expense.person))];
 
-  // Filter expenses based on search term, category, person, and active status
-  const filteredExpenses = expenses.filter(expense => {
+  // Apply both the global user filter and local filters
+  const filteredExpenses = filterDataBySelectedUsers(expenses).filter(expense => {
     const matchesSearch = expense.title 
       ? expense.title.toLowerCase().includes(searchTerm.toLowerCase())
       : expense.name 
         ? expense.name.toLowerCase().includes(searchTerm.toLowerCase()) 
         : true;
     const matchesCategory = filterCategory === '' || expense.category === filterCategory;
-    const matchesPerson = filterPerson === '' || expense.person === filterPerson;
     const matchesActive = filterActive === 'all' || 
                          (filterActive === 'active' && expense.active) || 
                          (filterActive === 'inactive' && !expense.active);
     
-    return matchesSearch && matchesCategory && matchesPerson && matchesActive;
+    return matchesSearch && matchesCategory && matchesActive;
   });
 
   // Sort expenses
@@ -65,7 +78,7 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
   });
 
   // Calculate total for active expenses (always use monthly equivalent)
-  const activeTotal = expenses
+  const activeTotal = filteredExpenses
     .filter(expense => expense.active)
     .reduce((total, expense) => {
       let amount = expense.amount;
@@ -77,7 +90,7 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
     }, 0);
 
   // Calculate non-monthly equivalent total (only used for display when toggle is off)
-  const nonMonthlyActiveTotal = expenses
+  const nonMonthlyActiveTotal = filteredExpenses
     .filter(expense => expense.active)
     .reduce((total, expense) => total + expense.amount, 0);
 
@@ -124,15 +137,23 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
             <Col md={2} className="mb-3 mb-md-0">
               <Form.Group>
                 <Form.Label>Person</Form.Label>
-                <Form.Select
-                  value={filterPerson}
-                  onChange={(e) => setFilterPerson(e.target.value)}
-                >
-                  <option value="">All Persons</option>
-                  {persons.map(person => (
-                    <option key={person} value={person}>{person}</option>
-                  ))}
-                </Form.Select>
+                <div>
+                  <Form.Select
+                    value={selectedUsers.includes('all') ? '' : selectedUsers.join(',')}
+                    onChange={(e) => {
+                      if (e.target.value === '') {
+                        handleSelectAllUsers(true);
+                      } else {
+                        handleUserFilterChange(e.target.value);
+                      }
+                    }}
+                  >
+                    <option value="">All Persons</option>
+                    {availableUsers.map(person => (
+                      <option key={person} value={person}>{person}</option>
+                    ))}
+                  </Form.Select>
+                </div>
               </Form.Group>
             </Col>
             <Col md={2} className="mb-3 mb-md-0">
@@ -192,6 +213,19 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
           <small className="ms-2">(Monthly Equivalent)</small>
         </h3>
         <p>Showing {sortedExpenses.length} of {expenses.length} expenses</p>
+        {!selectedUsers.includes('all') && (
+          <div className="filter-badge">
+            Filtered by: {selectedUsers.join(', ')}
+            <Button 
+              variant="link" 
+              size="sm" 
+              className="ms-2" 
+              onClick={() => handleSelectAllUsers(true)}
+            >
+              Clear
+            </Button>
+          </div>
+        )}
       </div>
 
       {sortedExpenses.length === 0 ? (
@@ -207,6 +241,7 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
             onDelete={onDelete}
             onToggle={onToggle}
             onEdit={onEdit}
+            showMonthlyEquivalent={showMonthlyEquivalent}
           />
         ))
       )}

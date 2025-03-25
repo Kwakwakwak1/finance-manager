@@ -16,6 +16,7 @@ import {
 import { Bar, Line, Pie } from 'react-chartjs-2';
 import { Button } from 'react-bootstrap';
 import { calculateMonthlyAmount } from '../data/expenseData';
+import { useFilter } from '../context/FilterContext';
 import './Dashboard.css';
 
 // Register ChartJS components
@@ -35,26 +36,30 @@ ChartJS.register(
 const Dashboard = ({ expenses, incomes }) => {
   const [categoryData, setCategoryData] = useState({ labels: [], data: [] });
   const [monthlyData, setMonthlyData] = useState({ labels: [], data: [] });
-  const [selectedUsers, setSelectedUsers] = useState(['all']);
-  const [availableUsers, setAvailableUsers] = useState([]);
   const [personIncomeExpenseData, setPersonIncomeExpenseData] = useState({});
+  
+  // Use the global filter context instead of local state
+  const { 
+    selectedUsers, 
+    availableUsers, 
+    updateAvailableUsers, 
+    handleUserFilterChange, 
+    handleSelectAllUsers,
+    filterDataBySelectedUsers 
+  } = useFilter();
 
-  // Extract unique users from expenses
+  // Update available users when expenses or incomes change
+  useEffect(() => {
+    if (expenses.length > 0 || incomes.length > 0) {
+      updateAvailableUsers(expenses, incomes);
+    }
+  }, [expenses, incomes, updateAvailableUsers]);
+
   useEffect(() => {
     if (expenses.length === 0) return;
     
-    const users = [...new Set(expenses.filter(expense => expense.person).map(expense => expense.person))];
-    setAvailableUsers(users);
-  }, [expenses]);
-
-  useEffect(() => {
-    if (expenses.length === 0) return;
-    
-    // Filter expenses based on selected users
-    const filteredExpenses = expenses.filter(expense => {
-      if (selectedUsers.includes('all')) return true;
-      return expense.person && selectedUsers.includes(expense.person);
-    });
+    // Use the filtered expenses from the context
+    const filteredExpenses = filterDataBySelectedUsers(expenses);
     
     // Process category data
     const categories = {};
@@ -156,7 +161,7 @@ const Dashboard = ({ expenses, incomes }) => {
     
     setPersonIncomeExpenseData(personData);
     
-  }, [expenses, selectedUsers, incomes]);
+  }, [expenses, selectedUsers, incomes, filterDataBySelectedUsers]);
 
   // Chart options and data
   const categoryChartData = {
@@ -240,7 +245,7 @@ const Dashboard = ({ expenses, incomes }) => {
       },
       title: {
         display: true,
-        text: 'Income vs Expenses',
+        text: 'Expenses from Income',
         font: {
           size: 16,
         },
@@ -249,10 +254,7 @@ const Dashboard = ({ expenses, incomes }) => {
   };
 
   // Calculate summary statistics for filtered expenses
-  const filteredExpenses = expenses.filter(expense => {
-    if (selectedUsers.includes('all')) return true;
-    return expense.person && selectedUsers.includes(expense.person);
-  });
+  const filteredExpenses = filterDataBySelectedUsers(expenses);
   
   const totalActive = filteredExpenses
     .filter(expense => expense.active)
@@ -267,46 +269,6 @@ const Dashboard = ({ expenses, incomes }) => {
       amount: categoryData.data[maxIndex] || 0,
     };
   }
-
-  // Handle user filter change
-  const handleUserFilterChange = (e) => {
-    const value = e.target.value;
-    
-    // If a specific user is selected
-    if (value !== 'all') {
-      // If "All Users" is currently selected, switch to just this user
-      if (selectedUsers.includes('all')) {
-        setSelectedUsers([value]);
-        return;
-      }
-      
-      // If the user is already selected
-      if (selectedUsers.includes(value)) {
-        // Don't allow deselecting if it's the only user selected
-        if (selectedUsers.length === 1) {
-          return;
-        }
-        // Otherwise remove this user from selection
-        setSelectedUsers(selectedUsers.filter(user => user !== value));
-      } else {
-        // Add this user to the current selection
-        setSelectedUsers([...selectedUsers, value]);
-      }
-    } else {
-      // If "All Users" is selected
-      setSelectedUsers(['all']);
-    }
-  };
-
-  // Handle "Select All" option
-  const handleSelectAllUsers = (e) => {
-    if (e.target.checked) {
-      setSelectedUsers(['all']);
-    } else {
-      // If unchecking "all", don't select any user
-      setSelectedUsers([]);
-    }
-  };
 
   return (
     <div className="dashboard">
@@ -326,7 +288,7 @@ const Dashboard = ({ expenses, incomes }) => {
                       label="All Users"
                       className="me-3 mb-2"
                       checked={selectedUsers.includes('all')}
-                      onChange={handleSelectAllUsers}
+                      onChange={(e) => handleSelectAllUsers(e.target.checked)}
                     />
                     {availableUsers.map(user => (
                       <Form.Check
@@ -336,7 +298,7 @@ const Dashboard = ({ expenses, incomes }) => {
                         label={user}
                         className="me-3 mb-2"
                         checked={selectedUsers.includes(user)}
-                        onChange={() => handleUserFilterChange({ target: { value: user } })}
+                        onChange={() => handleUserFilterChange(user)}
                       />
                     ))}
                   </div>
@@ -417,12 +379,12 @@ const Dashboard = ({ expenses, incomes }) => {
             
             // Create income vs expense pie chart data
             const incomeExpenseData = {
-              labels: ['Income', 'Expenses'],
+              labels: ['Balance', 'Expenses'],
               datasets: [
                 {
-                  data: [personData.income, personData.expenses],
+                  data: [Math.max(0, personData.balance), personData.expenses],
                   backgroundColor: [
-                    '#4BC0C0', // Income (green)
+                    '#4BC0C0', // Balance/Remaining Income (green)
                     '#FF6384'  // Expenses (red)
                   ],
                   borderWidth: 1,
@@ -458,7 +420,7 @@ const Dashboard = ({ expenses, incomes }) => {
                     <Row className="mb-4">
                       <Col md={6}>
                         <div className="text-center mb-2">
-                          <h5>Monthly Income vs Expenses</h5>
+                          <h5>Monthly Expenses from Income</h5>
                         </div>
                         <Pie data={incomeExpenseData} options={pieOptions} />
                       </Col>
@@ -575,7 +537,7 @@ const Dashboard = ({ expenses, incomes }) => {
                     variant="outline-primary" 
                     size="sm" 
                     className="mt-3 w-100"
-                    onClick={() => handleUserFilterChange({ target: { value: person } })}
+                    onClick={() => handleUserFilterChange(person)}
                   >
                     View Detailed Analysis
                   </Button>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Container, Tabs, Tab } from 'react-bootstrap';
 import { v4 as uuidv4 } from 'uuid';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -13,6 +13,7 @@ import IncomeManager from './components/IncomeManager';
 import { defaultFinancialData } from './data/expenseData';
 import { formatExpensesForFile } from './utils/dataUtils';
 import { updateExpenseDataFile } from './services/fileService';
+import { FilterProvider } from './context/FilterContext';
 import './App.css';
 
 function App() {
@@ -237,79 +238,107 @@ function App() {
     return [...new Set([...personsFromExpenses, ...personsFromIncomes])];
   };
 
+  // Memoize the unique persons to avoid recalculating on every render
+  const uniquePersons = useMemo(() => getUniquePersons(), [expenses, incomes]);
+
   return (
-    <div className="app">
-      <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
-      
-      <Container className="main-container">
-        {activeTab === 'dashboard' ? (
-          <Dashboard expenses={expenses} incomes={incomes} />
-        ) : (
-          <div>
-            <div className="d-flex justify-content-end mb-4">
-              <button 
-                className="btn btn-outline-secondary me-2" 
-                onClick={importDefaultData}
-                disabled={showImportedData && expenses.length === defaultFinancialData.expenses.length}
+    <FilterProvider>
+      <div className="app">
+        <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
+        
+        <Container className="main-container">
+          {activeTab === 'dashboard' && (
+            <Dashboard expenses={expenses} incomes={incomes} />
+          )}
+          
+          {activeTab === 'expenses' && (
+            <div>
+              <h2 className="mb-4">Expense Tracker</h2>
+              <Tabs
+                activeKey={expensesTabKey}
+                onSelect={(k) => setExpensesTabKey(k)}
+                className="mb-3"
               >
-                Reset to Default Data
-              </button>
-              <button 
-                className="btn btn-outline-danger" 
-                onClick={clearExpenses}
-              >
-                Clear All Data
-              </button>
+                <Tab eventKey="list" title="Expense List">
+                  <ExpenseList
+                    expenses={expenses}
+                    onDelete={deleteExpense}
+                    onToggle={toggleExpense}
+                    onEdit={(expense) => {
+                      setExpenseToEdit(expense);
+                      setExpensesTabKey('add');
+                    }}
+                  />
+                </Tab>
+                <Tab eventKey="add" title={expenseToEdit ? 'Edit Expense' : 'Add Expense'}>
+                  <ExpenseForm
+                    onAdd={addExpense}
+                    onEdit={editExpense}
+                    expenseToEdit={expenseToEdit}
+                    resetEdit={() => setExpenseToEdit(null)}
+                    existingPersons={uniquePersons}
+                  />
+                </Tab>
+              </Tabs>
             </div>
-            
-            <Tabs
-              activeKey={expensesTabKey}
-              onSelect={(k) => setExpensesTabKey(k)}
-              className="mb-4"
-            >
-              <Tab eventKey="list" title="Expenses">
-                <ExpenseForm 
-                  addExpense={addExpense} 
-                  editExpense={editExpense}
-                  expenseToEdit={expenseToEdit}
-                  setExpenseToEdit={setExpenseToEdit}
-                />
-                <ExpenseList 
-                  expenses={expenses}
-                  onDelete={deleteExpense}
-                  onToggle={toggleExpense}
-                  onEdit={setExpenseToEdit}
-                />
-              </Tab>
-              <Tab eventKey="income" title="Income">
-                <IncomeManager 
-                  expenses={expenses}
-                  incomes={incomes}
-                  addIncome={addIncome}
-                  updateIncome={updateIncome}
-                  deleteIncome={deleteIncome}
-                  persons={getUniquePersons()}
-                />
-              </Tab>
-              <Tab eventKey="manage" title="Manage Persons">
-                <PersonManager 
-                  expenses={expenses}
-                  incomes={incomes}
-                  updatePersonName={updatePersonName}
-                  saveAsDefault={saveAsDefault}
-                />
-              </Tab>
-            </Tabs>
-          </div>
-        )}
-      </Container>
-      
-      <footer className="footer mt-auto py-3">
-        <Container>
-          <p className="text-center text-muted">&copy; {new Date().getFullYear()} Financial Manager</p>
+          )}
+          
+          {activeTab === 'income' && (
+            <IncomeManager
+              incomes={incomes}
+              onAdd={addIncome}
+              onUpdate={updateIncome}
+              onDelete={deleteIncome}
+              existingPersons={uniquePersons}
+            />
+          )}
+          
+          {activeTab === 'manage-people' && (
+            <PersonManager
+              expenses={expenses}
+              incomes={incomes}
+              updatePersonName={updatePersonName}
+            />
+          )}
+          
+          {activeTab === 'settings' && (
+            <div className="settings-container">
+              <h2 className="mb-4">Settings</h2>
+              <div className="settings-section">
+                <h3>Data Management</h3>
+                <div className="settings-actions">
+                  <button onClick={importDefaultData} className="btn btn-secondary">
+                    Import Default Data
+                  </button>
+                  <button onClick={saveAsDefault} className="btn btn-primary">
+                    Save Current Data as Default
+                  </button>
+                  <button onClick={clearExpenses} className="btn btn-danger">
+                    Clear All Data
+                  </button>
+                </div>
+              </div>
+              <div className="settings-info">
+                <p>
+                  {showImportedData && expenses.length > 0 ? 
+                    'You are currently using imported sample data. Feel free to modify or add expenses.' :
+                    'You are using your own data. You can always import sample data if needed.'}
+                </p>
+                <p>
+                  <strong>Note:</strong> All data is stored locally in your browser.
+                </p>
+              </div>
+            </div>
+          )}
         </Container>
-      </footer>
-    </div>
+        
+        <footer className="footer mt-auto py-3">
+          <Container>
+            <p className="text-center text-muted">&copy; {new Date().getFullYear()} Financial Manager</p>
+          </Container>
+        </footer>
+      </div>
+    </FilterProvider>
   );
 }
 
