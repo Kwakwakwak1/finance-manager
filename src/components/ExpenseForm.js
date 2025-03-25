@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Button, Row, Col } from 'react-bootstrap';
 import { FREQUENCY_OPTIONS, EXPENSE_CATEGORIES } from '../data/expenseData';
+import { useFilter } from '../context/FilterContext';
 import './ExpenseForm.css';
 
 const ExpenseForm = ({ addExpense, editExpense, expenseToEdit, setExpenseToEdit }) => {
+  const { availableUsers } = useFilter();
   const [formData, setFormData] = useState({
     title: '',
     amount: '',
@@ -193,13 +195,16 @@ const ExpenseForm = ({ addExpense, editExpense, expenseToEdit, setExpenseToEdit 
         <Col md={6}>
           <Form.Group className="mb-3">
             <Form.Label>Person</Form.Label>
-            <Form.Control
-              type="text"
+            <Form.Select
               name="person"
-              placeholder="e.g., K, T, M"
               value={formData.person}
               onChange={handleChange}
-            />
+            >
+              <option value="">Select a person</option>
+              {availableUsers.map(person => (
+                <option key={person} value={person}>{person}</option>
+              ))}
+            </Form.Select>
           </Form.Group>
         </Col>
         <Col md={6}>

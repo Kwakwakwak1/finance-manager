@@ -19,14 +19,14 @@
   color: #495057;
 }
 
-.person-manager-card .list-group-item {
-  border-left: none;
-  border-right: none;
-  transition: background-color 0.2s;
+.person-manager-card table {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.person-manager-card .list-group-item:hover {
+.person-manager-card th {
   background-color: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
 }
 
 .person-manager-card .badge {
@@ -42,4 +42,33 @@
 .person-manager-card .btn-success:hover {
   background-color: #218838;
   border-color: #1e7e34;
+}
+
+.person-manager-card .btn-outline-primary:hover {
+  background-color: #007bff;
+  color: white;
+}
+
+.person-manager-card .btn-outline-secondary:hover {
+  background-color: #6c757d;
+  color: white;
+}
+
+.person-manager-card .btn-outline-success:hover {
+  background-color: #28a745;
+  color: white;
+}
+
+.person-manager-card .btn-outline-danger:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+.person-manager-card .table-secondary {
+  opacity: 0.8;
+}
+
+.person-manager-card .text-muted {
+  font-size: 0.9rem;
+  color: #6c757d;
 } 

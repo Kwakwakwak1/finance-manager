@@ -348,3 +348,106 @@ export const goalApi = {
     }
   },
 };
+
+// Person API endpoints
+export const personApi = {
+  getAll: async () => {
+    if (!API_AVAILABLE) {
+      throw new Error('API not available');
+    }
+    
+    try {
+      const response = await fetch(`${API_URL}/persons`, getFetchOptions());
+      return handleResponse(response);
+    } catch (error) {
+      logApiError('Error fetching persons:', error);
+      API_AVAILABLE = false;
+      throw error;
+    }
+  },
+  
+  getById: async (id) => {
+    if (!API_AVAILABLE) {
+      throw new Error('API not available');
+    }
+    
+    try {
+      const response = await fetch(`${API_URL}/persons/${id}`, getFetchOptions());
+      return handleResponse(response);
+    } catch (error) {
+      logApiError(`Error fetching person ${id}:`, error);
+      API_AVAILABLE = false;
+      throw error;
+    }
+  },
+  
+  create: async (person) => {
+    if (!API_AVAILABLE) {
+      throw new Error('API not available');
+    }
+    
+    try {
+      const response = await fetch(`${API_URL}/persons`, getFetchOptions({
+        method: 'POST',
+        body: JSON.stringify(person),
+      }));
+      return handleResponse(response);
+    } catch (error) {
+      logApiError('Error creating person:', error);
+      API_AVAILABLE = false;
+      throw error;
+    }
+  },
+  
+  update: async (id, person) => {
+    if (!API_AVAILABLE) {
+      throw new Error('API not available');
+    }
+    
+    try {
+      const response = await fetch(`${API_URL}/persons/${id}`, getFetchOptions({
+        method: 'PUT',
+        body: JSON.stringify(person),
+      }));
+      return handleResponse(response);
+    } catch (error) {
+      logApiError(`Error updating person ${id}:`, error);
+      API_AVAILABLE = false;
+      throw error;
+    }
+  },
+  
+  toggleActive: async (id) => {
+    if (!API_AVAILABLE) {
+      throw new Error('API not available');
+    }
+    
+    try {
+      const response = await fetch(`${API_URL}/persons/${id}/toggle-active`, getFetchOptions({
+        method: 'PATCH',
+      }));
+      return handleResponse(response);
+    } catch (error) {
+      logApiError(`Error toggling person ${id} active status:`, error);
+      API_AVAILABLE = false;
+      throw error;
+    }
+  },
+  
+  delete: async (id) => {
+    if (!API_AVAILABLE) {
+      throw new Error('API not available');
+    }
+    
+    try {
+      const response = await fetch(`${API_URL}/persons/${id}`, getFetchOptions({
+        method: 'DELETE',
+      }));
+      return handleResponse(response);
+    } catch (error) {
+      logApiError(`Error deleting person ${id}:`, error);
+      API_AVAILABLE = false;
+      throw error;
+    }
+  },
+};

@@ -12,6 +12,7 @@ const logger = require('./utils/logger');
 const incomeRoutes = require('./routes/incomeRoutes');
 const expenseRoutes = require('./routes/expenseRoutes');
 const goalRoutes = require('./routes/goalRoutes');
+const personRoutes = require('./routes/personRoutes');
 
 // Create Express app
 const app = express();
@@ -53,6 +54,7 @@ app.use((req, res, next) => {
 app.use('/api/incomes', incomeRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/goals', goalRoutes);
+app.use('/api/persons', personRoutes);
 
 // Basic route for API testing
 app.get('/', (req, res) => {
