@@ -14,7 +14,7 @@ import { defaultFinancialData } from './data/expenseData';
 import { formatExpensesForFile } from './utils/dataUtils';
 import { updateExpenseDataFile } from './services/fileService';
 import { FilterProvider } from './context/FilterContext';
-import { expenseApi, incomeApi, goalApi } from './services/apiService';
+import { expenseApi, incomeApi, goalApi, checkApiAvailability } from './services/apiService';
 import './App.css';
 
 function App() {
@@ -25,9 +25,7 @@ function App() {
   const [error, setError] = useState(null);
   const [apiConnected, setApiConnected] = useState(true);
 
-  const [expenseToEdit, setExpenseToEdit] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [expensesTabKey, setExpensesTabKey] = useState('list');
   const [showImportedData, setShowImportedData] = useState(true); // Set to true since we're now using the default data
 
   // Fetch data from API on component mount
@@ -35,21 +33,31 @@ function App() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Load data from API
-        const [expensesData, incomesData, goalsData] = await Promise.all([
-          expenseApi.getAll(),
-          incomeApi.getAll(),
-          goalApi.getAll()
-        ]);
+        // First check if the API is available
+        const isApiAvailable = await checkApiAvailability();
+        setApiConnected(isApiAvailable);
         
-        setExpenses(expensesData);
-        setIncomes(incomesData);
-        setGoals(goalsData);
-        setApiConnected(true);
-        setError(null);
+        if (isApiAvailable) {
+          // Load data from API
+          const [expensesData, incomesData, goalsData] = await Promise.all([
+            expenseApi.getAll(),
+            incomeApi.getAll(),
+            goalApi.getAll()
+          ]);
+          
+          setExpenses(expensesData);
+          setIncomes(incomesData);
+          setGoals(goalsData);
+          setError(null);
+        } else {
+          // Silently switch to local storage without throwing error
+          throw new Error('API_UNAVAILABLE');
+        }
       } catch (err) {
-        console.error('Error fetching data from API:', err);
-        setError('Oops!!! Failed to load data from server. Using local storage as fallback.');
+        if (err.message !== 'API_UNAVAILABLE') {
+          console.error('Error fetching data from API:', err);
+        }
+        setError('Using locally stored data - changes will be saved in your browser.');
         setApiConnected(false);
         
         // Fallback to localStorage if API fails
@@ -164,6 +172,7 @@ function App() {
 
   // Edit expense
   const editExpense = async (updatedExpense) => {
+    console.log('App.js editExpense called with:', updatedExpense);
     try {
       if (apiConnected) {
         const response = await expenseApi.update(updatedExpense.id, updatedExpense);
@@ -434,6 +443,21 @@ function App() {
         <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
         
         <Container className="main-container">
+          {error && (
+            <div className="alert alert-warning alert-dismissible fade show" role="alert">
+              <strong>Notice:</strong> {error}
+              <button type="button" className="btn-close" onClick={() => setError(null)} aria-label="Close"></button>
+            </div>
+          )}
+          
+          {!apiConnected && (
+            <div className="alert alert-info mb-3">
+              <i className="bi bi-cloud-slash me-2"></i>
+              <strong>Offline Mode:</strong> You're working with local data stored in your browser.
+              All changes will be saved locally, but won't sync with any server.
+            </div>
+          )}
+          
           {activeTab === 'dashboard' && (
             <Dashboard expenses={expenses} incomes={incomes} />
           )}
@@ -441,32 +465,12 @@ function App() {
           {activeTab === 'expenses' && (
             <div>
               <h2 className="mb-4">Expense Tracker</h2>
-              <Tabs
-                activeKey={expensesTabKey}
-                onSelect={(k) => setExpensesTabKey(k)}
-                className="mb-3"
-              >
-                <Tab eventKey="list" title="Expense List">
-                  <ExpenseList
-                    expenses={expenses}
-                    onDelete={deleteExpense}
-                    onToggle={toggleExpense}
-                    onEdit={(expense) => {
-                      setExpenseToEdit(expense);
-                      setExpensesTabKey('add');
-                    }}
-                  />
-                </Tab>
-                <Tab eventKey="add" title={expenseToEdit ? 'Edit Expense' : 'Add Expense'}>
-                  <ExpenseForm
-                    onAdd={addExpense}
-                    onEdit={editExpense}
-                    expenseToEdit={expenseToEdit}
-                    resetEdit={() => setExpenseToEdit(null)}
-                    existingPersons={uniquePersons}
-                  />
-                </Tab>
-              </Tabs>
+              <ExpenseList
+                expenses={expenses}
+                onDelete={deleteExpense}
+                onToggle={toggleExpense}
+                onEdit={editExpense}
+              />
             </div>
           )}
           

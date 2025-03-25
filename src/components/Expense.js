@@ -3,12 +3,24 @@ import { Button, Card, Badge } from 'react-bootstrap';
 import './Expense.css';
 
 const Expense = ({ expense, onDelete, onToggle, onEdit }) => {
+  console.log('Expense component, onEdit type:', typeof onEdit);
+  
   // Helper function to format frequency for display
   const formatFrequency = (frequency) => {
     if (!frequency) return '';
     
     // Capitalize first letter
     return frequency.charAt(0).toUpperCase() + frequency.slice(1);
+  };
+
+  // Safe edit handler
+  const handleEdit = () => {
+    if (typeof onEdit === 'function') {
+      onEdit(expense);
+    } else {
+      console.error('onEdit is not a function in Expense component');
+      alert('There was an error editing this expense. Please try again later.');
+    }
   };
 
   return (
@@ -41,7 +53,7 @@ const Expense = ({ expense, onDelete, onToggle, onEdit }) => {
               variant="outline-primary" 
               size="sm" 
               className="me-2"
-              onClick={() => onEdit(expense)}
+              onClick={handleEdit}
             >
               Edit
             </Button>

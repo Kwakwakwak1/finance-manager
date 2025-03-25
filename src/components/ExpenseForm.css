@@ -1,29 +1,44 @@
 .expense-form-card {
-  border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-  border-top: 4px solid #007bff;
-}
-
-.expense-form-card:hover {
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  border: none;
 }
 
 .expense-form-card .card-title {
-  color: #007bff;
   font-weight: 600;
   margin-bottom: 1.5rem;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.75rem;
+}
+
+.expense-form {
+  padding: 0.5rem;
+}
+
+.expense-form .form-label {
+  font-weight: 500;
+}
+
+.expense-form .form-control:focus,
+.expense-form .form-select:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Modal styles - these match the income manager styles */
+.modal-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-title {
+  font-weight: 600;
 }
 
 .expense-form-card label {
   font-weight: 500;
   color: #495057;
-}
-
-.expense-form-card .form-control:focus,
-.expense-form-card .form-select:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 .expense-form-card .btn-primary {

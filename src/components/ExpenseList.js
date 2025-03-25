@@ -1,17 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Form, InputGroup, Button, Card } from 'react-bootstrap';
+import { Row, Col, Form, InputGroup, Button, Card, Modal } from 'react-bootstrap';
 import Expense from './Expense';
+import ExpenseForm from './ExpenseForm';
 import { calculateMonthlyAmount } from '../data/expenseData';
 import { useFilter } from '../context/FilterContext';
 import './ExpenseList.css';
 
 const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
+  console.log('ExpenseList render, onEdit type:', typeof onEdit);
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterActive, setFilterActive] = useState('all');
   const [sortBy, setSortBy] = useState('date');
   const [sortDirection, setSortDirection] = useState('desc');
   const [showMonthlyEquivalent, setShowMonthlyEquivalent] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [expenseToEdit, setExpenseToEdit] = useState(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Use the global filter context
   const { 
@@ -55,9 +62,11 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
       const bAmount = showMonthlyEquivalent && b.frequency ? calculateMonthlyAmount(b.amount, b.frequency) : b.amount;
       return sortDirection === 'asc' ? aAmount - bAmount : bAmount - aAmount;
     } else if (sortBy === 'title') {
+      const aTitle = a.title || a.name || '';
+      const bTitle = b.title || b.name || '';
       return sortDirection === 'asc' 
-        ? a.title.localeCompare(b.title) 
-        : b.title.localeCompare(a.title);
+        ? aTitle.localeCompare(bTitle) 
+        : bTitle.localeCompare(aTitle);
     } else if (sortBy === 'category') {
       return sortDirection === 'asc' 
         ? a.category.localeCompare(b.category) 
@@ -76,6 +85,54 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
         : new Date(b.date) - new Date(a.date);
     }
   });
+
+  // Handle form open
+  const handleShowForm = () => {
+    setExpenseToEdit(null);
+    setShowForm(true);
+  };
+
+  // Handle form close
+  const handleCloseForm = () => {
+    setShowForm(false);
+    setExpenseToEdit(null);
+  };
+
+  // Handle edit expense
+  const handleEditExpense = (expense) => {
+    setExpenseToEdit(expense);
+    setShowForm(true);
+  };
+
+  // Handle add expense
+  const handleAddExpense = (expenseData) => {
+    console.log('Adding expense:', expenseData);
+    onEdit(expenseData);
+    setSuccessMessage(`Added new expense "${expenseData.title}"`);
+    setShowSuccess(true);
+    
+    // Hide success message after 3 seconds
+    setTimeout(() => {
+      setShowSuccess(false);
+    }, 3000);
+    
+    handleCloseForm();
+  };
+
+  // Handle update expense
+  const handleUpdateExpense = (expenseData) => {
+    console.log('Updating expense:', expenseData);
+    onEdit(expenseData);
+    setSuccessMessage(`Updated expense "${expenseData.title}"`);
+    setShowSuccess(true);
+    
+    // Hide success message after 3 seconds
+    setTimeout(() => {
+      setShowSuccess(false);
+    }, 3000);
+    
+    handleCloseForm();
+  };
 
   // Calculate total for active expenses (always use monthly equivalent)
   const activeTotal = filteredExpenses
@@ -98,6 +155,22 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
     <div className="expense-list">
       <Card className="filter-card mb-4">
         <Card.Body>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h3 className="mb-0">Manage Expenses</h3>
+            <Button 
+              variant="primary" 
+              onClick={handleShowForm}
+            >
+              Add New Expense
+            </Button>
+          </div>
+          
+          {showSuccess && (
+            <div className="alert alert-success mt-2 mb-3">
+              {successMessage}
+            </div>
+          )}
+          
           <Row className="align-items-end">
             <Col md={3} className="mb-3 mb-md-0">
               <Form.Group>
@@ -240,11 +313,28 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
             expense={expense}
             onDelete={onDelete}
             onToggle={onToggle}
-            onEdit={onEdit}
+            onEdit={handleEditExpense}
             showMonthlyEquivalent={showMonthlyEquivalent}
           />
         ))
       )}
+      
+      {/* Expense Form Modal */}
+      <Modal show={showForm} onHide={handleCloseForm} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>{expenseToEdit ? 'Edit Expense' : 'Add New Expense'}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {console.log('Modal rendering, handleAddExpense type:', typeof handleAddExpense)}
+          {console.log('Modal rendering, handleUpdateExpense type:', typeof handleUpdateExpense)}
+          <ExpenseForm 
+            addExpense={handleAddExpense} 
+            editExpense={handleUpdateExpense} 
+            expenseToEdit={expenseToEdit}
+            setExpenseToEdit={setExpenseToEdit}
+          />
+        </Modal.Body>
+      </Modal>
     </div>
   );
 };

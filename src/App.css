@@ -122,3 +122,23 @@ body {
     font-size: 0.9rem;
   }
 }
+
+/* Alert styles */
+.alert {
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.alert-info {
+  background-color: #e8f4fd;
+  border-color: #c1e0fc;
+  color: #0c5eaa;
+}
+
+.alert-warning {
+  background-color: #fff8e5;
+  border-color: #ffe8a8;
+  color: #8a6d00;
+}
