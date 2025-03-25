@@ -54,8 +54,8 @@ const ExpenseForm = ({ addExpense, editExpense, expenseToEdit, setExpenseToEdit 
 
     if (expenseToEdit) {
       // Preserve the name property if it exists
-      console.log('Submitting edit for expense:', expenseToEdit.id);
-      console.log('editExpense function:', typeof editExpense);
+      // console.log('Submitting edit for expense:', expenseToEdit.id);
+      // console.log('editExpense function:', typeof editExpense);
       
       if (typeof editExpense === 'function') {
         editExpense({ 

@@ -3,7 +3,7 @@ import { Button, Card, Badge } from 'react-bootstrap';
 import './Expense.css';
 
 const Expense = ({ expense, onDelete, onToggle, onEdit }) => {
-  console.log('Expense component, onEdit type:', typeof onEdit);
+  // console.log('Expense component, onEdit type:', typeof onEdit);
   
   // Helper function to format frequency for display
   const formatFrequency = (frequency) => {

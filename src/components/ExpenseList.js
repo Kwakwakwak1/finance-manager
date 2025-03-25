@@ -7,7 +7,7 @@ import { useFilter } from '../context/FilterContext';
 import './ExpenseList.css';
 
 const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
-  console.log('ExpenseList render, onEdit type:', typeof onEdit);
+  // console.log('ExpenseList render, onEdit type:', typeof onEdit);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
@@ -106,7 +106,7 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
 
   // Handle add expense
   const handleAddExpense = (expenseData) => {
-    console.log('Adding expense:', expenseData);
+    // console.log('Adding expense:', expenseData);
     onEdit(expenseData);
     setSuccessMessage(`Added new expense "${expenseData.title}"`);
     setShowSuccess(true);
@@ -121,7 +121,7 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
 
   // Handle update expense
   const handleUpdateExpense = (expenseData) => {
-    console.log('Updating expense:', expenseData);
+    // console.log('Updating expense:', expenseData);
     onEdit(expenseData);
     setSuccessMessage(`Updated expense "${expenseData.title}"`);
     setShowSuccess(true);
@@ -325,8 +325,8 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
           <Modal.Title>{expenseToEdit ? 'Edit Expense' : 'Add New Expense'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {console.log('Modal rendering, handleAddExpense type:', typeof handleAddExpense)}
-          {console.log('Modal rendering, handleUpdateExpense type:', typeof handleUpdateExpense)}
+          {/* {console.log('Modal rendering, handleAddExpense type:', typeof handleAddExpense)}
+          {console.log('Modal rendering, handleUpdateExpense type:', typeof handleUpdateExpense)} */}
           <ExpenseForm 
             addExpense={handleAddExpense} 
             editExpense={handleUpdateExpense} 

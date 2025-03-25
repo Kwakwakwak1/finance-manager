@@ -172,7 +172,7 @@ function App() {
 
   // Edit expense
   const editExpense = async (updatedExpense) => {
-    console.log('App.js editExpense called with:', updatedExpense);
+    // console.log('App.js editExpense called with:', updatedExpense);
     try {
       if (apiConnected) {
         const response = await expenseApi.update(updatedExpense.id, updatedExpense);
