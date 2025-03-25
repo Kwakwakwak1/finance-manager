@@ -48,7 +48,7 @@ function App() {
         setError(null);
       } catch (err) {
         console.error('Error fetching data from API:', err);
-        setError('Oopss!!! Failed to load data from server. Using local storage as fallback.');
+        setError('Oops!!! Failed to load data from server. Using local storage as fallback.');
         setApiConnected(false);
         
         // Fallback to localStorage if API fails
