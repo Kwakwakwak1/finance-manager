@@ -1,0 +1,96 @@
+.plans-manager-container {
+  padding: 20px 0;
+}
+
+.page-title {
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.page-description {
+  color: #666;
+  margin-bottom: 25px;
+}
+
+.plans-sidebar {
+  margin-bottom: 20px;
+}
+
+.plan-list-item {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.plan-list-item:hover {
+  background-color: #f8f9fa;
+}
+
+.plan-name {
+  font-weight: 500;
+  margin-right: 10px;
+}
+
+.plan-table {
+  font-size: 0.9rem;
+}
+
+.plan-table .text-right {
+  text-align: right;
+}
+
+.disabled-item {
+  opacity: 0.6;
+  background-color: #f8f9fa;
+}
+
+.plan-impact {
+  padding: 10px 0;
+}
+
+.plan-impact h3 {
+  margin: 15px 0;
+  font-weight: 600;
+}
+
+.text-success {
+  color: #28a745 !important;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}
+
+.mr-2 {
+  margin-right: 10px;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.font-weight-bold td {
+  font-weight: 600;
+}
+
+.person-toggles-card {
+  background-color: #f9f9f9;
+  margin-bottom: 1.5rem;
+}
+
+.person-toggles-card .card-title {
+  font-size: 1.1rem;
+  color: #495057;
+}
+
+.person-toggle {
+  padding: 6px 0;
+}
+
+.person-toggle .form-check {
+  margin-bottom: 0;
+}
+
+.person-toggle .form-check-label {
+  font-weight: 500;
+  padding-left: 8px;
+} 

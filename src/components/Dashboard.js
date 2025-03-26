@@ -17,6 +17,7 @@ import { Bar, Line, Pie } from 'react-chartjs-2';
 import { Button } from 'react-bootstrap';
 import { calculateMonthlyAmount } from '../data/expenseData';
 import { useFilter } from '../context/FilterContext';
+import { usePlans } from '../context/PlansContext';
 import './Dashboard.css';
 
 // Register ChartJS components
@@ -37,8 +38,9 @@ const Dashboard = ({ expenses, incomes }) => {
   const [categoryData, setCategoryData] = useState({ labels: [], data: [] });
   const [monthlyData, setMonthlyData] = useState({ labels: [], data: [] });
   const [personIncomeExpenseData, setPersonIncomeExpenseData] = useState({});
+  const [showPlanComparison, setShowPlanComparison] = useState(false);
   
-  // Use the global filter context instead of local state
+  // Use the global filter context
   const { 
     selectedUsers, 
     availableUsers, 
@@ -48,6 +50,14 @@ const Dashboard = ({ expenses, incomes }) => {
     filterDataBySelectedUsers 
   } = useFilter();
 
+  // Use the global plans context
+  const { 
+    plans, 
+    activePlanIds, 
+    calculatePlanImpact,
+    getActivePlans
+  } = usePlans();
+
   // Update available users when expenses or incomes change
   useEffect(() => {
     if (expenses.length > 0 || incomes.length > 0) {
@@ -55,6 +65,7 @@ const Dashboard = ({ expenses, incomes }) => {
     }
   }, [expenses, incomes, updateAvailableUsers]);
 
+  // Process chart data
   useEffect(() => {
     if (expenses.length === 0) return;
     
@@ -163,6 +174,139 @@ const Dashboard = ({ expenses, incomes }) => {
     
   }, [expenses, selectedUsers, incomes, filterDataBySelectedUsers]);
 
+  // Generate comparison chart data for plans
+  const generatePlanComparisonData = () => {
+    const activePlans = getActivePlans();
+    if (activePlans.length === 0) return null;
+
+    // Get current monthly expenses
+    const currentMonthlyExpenses = expenses.reduce((sum, expense) => {
+      if (expense.active) {
+        return sum + calculateMonthlyAmount(expense.amount, expense.frequency || 'monthly');
+      }
+      return sum;
+    }, 0);
+
+    // Prepare data for chart
+    const labels = ['Current'];
+    const expensesData = [currentMonthlyExpenses];
+    const savingsData = [0];  // Current has no savings (reference point)
+    const backgroundColors = ['rgba(54, 162, 235, 0.7)'];
+    const borderColors = ['rgba(54, 162, 235, 1)'];
+    const savingsBackgroundColors = ['rgba(255, 99, 132, 0)'];
+    const savingsBorderColors = ['rgba(255, 99, 132, 0)'];
+
+    // Add data for each active plan
+    activePlans.forEach(plan => {
+      const impact = calculatePlanImpact(plan.id);
+      labels.push(plan.name);
+      expensesData.push(impact.planMonthlyExpenses);
+      savingsData.push(impact.monthlySavings);
+      
+      // Use different colors for each plan
+      if (impact.monthlySavings >= 0) {
+        backgroundColors.push('rgba(40, 167, 69, 0.7)');
+        borderColors.push('rgba(40, 167, 69, 1)');
+        savingsBackgroundColors.push('rgba(40, 167, 69, 0.3)');
+        savingsBorderColors.push('rgba(40, 167, 69, 1)');
+      } else {
+        backgroundColors.push('rgba(220, 53, 69, 0.7)');
+        borderColors.push('rgba(220, 53, 69, 1)');
+        savingsBackgroundColors.push('rgba(220, 53, 69, 0.3)');
+        savingsBorderColors.push('rgba(220, 53, 69, 1)');
+      }
+    });
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Monthly Expenses',
+          data: expensesData,
+          backgroundColor: backgroundColors,
+          borderColor: borderColors,
+          borderWidth: 1,
+        },
+        {
+          label: 'Monthly Savings',
+          data: savingsData,
+          backgroundColor: savingsBackgroundColors,
+          borderColor: savingsBorderColors,
+          borderWidth: 1,
+        }
+      ]
+    };
+  };
+
+  // Calculate category comparison data for plans
+  const generateCategoryComparisonData = () => {
+    const activePlans = getActivePlans();
+    if (activePlans.length === 0) return null;
+
+    // Get unique categories from current expenses
+    const allCategories = [...new Set(expenses.map(expense => expense.category))];
+    
+    // Calculate current category totals
+    const currentCategoryTotals = {};
+    expenses.forEach(expense => {
+      if (expense.active) {
+        const monthlyAmount = calculateMonthlyAmount(expense.amount, expense.frequency || 'monthly');
+        if (currentCategoryTotals[expense.category]) {
+          currentCategoryTotals[expense.category] += monthlyAmount;
+        } else {
+          currentCategoryTotals[expense.category] = monthlyAmount;
+        }
+      }
+    });
+
+    // Prepare datasets for the chart
+    const datasets = [{
+      label: 'Current',
+      data: allCategories.map(category => currentCategoryTotals[category] || 0),
+      backgroundColor: 'rgba(54, 162, 235, 0.7)',
+      borderColor: 'rgba(54, 162, 235, 1)',
+      borderWidth: 1,
+    }];
+
+    // Colors for plans
+    const planColors = [
+      { bg: 'rgba(40, 167, 69, 0.7)', border: 'rgba(40, 167, 69, 1)' },
+      { bg: 'rgba(255, 193, 7, 0.7)', border: 'rgba(255, 193, 7, 1)' },
+      { bg: 'rgba(111, 66, 193, 0.7)', border: 'rgba(111, 66, 193, 1)' },
+      { bg: 'rgba(23, 162, 184, 0.7)', border: 'rgba(23, 162, 184, 1)' },
+    ];
+
+    // Add dataset for each active plan
+    activePlans.forEach((plan, index) => {
+      // Calculate plan category totals
+      const planCategoryTotals = {};
+      plan.expenses.forEach(expense => {
+        if (expense.enabled && expense.active) {
+          const monthlyAmount = calculateMonthlyAmount(expense.amount, expense.frequency || 'monthly');
+          if (planCategoryTotals[expense.category]) {
+            planCategoryTotals[expense.category] += monthlyAmount;
+          } else {
+            planCategoryTotals[expense.category] = monthlyAmount;
+          }
+        }
+      });
+
+      // Add dataset for this plan
+      datasets.push({
+        label: plan.name,
+        data: allCategories.map(category => planCategoryTotals[category] || 0),
+        backgroundColor: planColors[index % planColors.length].bg,
+        borderColor: planColors[index % planColors.length].border,
+        borderWidth: 1,
+      });
+    });
+
+    return {
+      labels: allCategories,
+      datasets
+    };
+  };
+
   // Chart options and data
   const categoryChartData = {
     labels: categoryData.labels,
@@ -253,6 +397,56 @@ const Dashboard = ({ expenses, incomes }) => {
     },
   };
 
+  const comparisonOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Plan Comparison - Monthly Expenses',
+        font: {
+          size: 16,
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Amount ($)'
+        }
+      }
+    }
+  };
+
+  const categoryComparisonOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Category Expenses Comparison',
+        font: {
+          size: 16,
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Amount ($)'
+        }
+      }
+    }
+  };
+
   // Calculate summary statistics for filtered expenses
   const filteredExpenses = filterDataBySelectedUsers(expenses);
   
@@ -270,12 +464,16 @@ const Dashboard = ({ expenses, incomes }) => {
     };
   }
 
+  // Plan comparison data
+  const planComparisonData = generatePlanComparisonData();
+  const categoryComparisonData = generateCategoryComparisonData();
+
   return (
     <div className="dashboard">
       <h2 className="mb-4">Financial Dashboard</h2>
       
       <Row className="mb-4">
-        <Col md={12}>
+        <Col md={8}>
           <Card className="filter-card">
             <Card.Body>
               <Form>
@@ -304,6 +502,32 @@ const Dashboard = ({ expenses, incomes }) => {
                   </div>
                 </Form.Group>
               </Form>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={4}>
+          <Card className="h-100">
+            <Card.Body className="d-flex align-items-center justify-content-between">
+              <Form.Group>
+                <Form.Label>Show Plan Comparisons</Form.Label>
+                <Form.Check 
+                  type="switch"
+                  id="plan-comparison-switch"
+                  label={showPlanComparison ? "Enabled" : "Disabled"}
+                  checked={showPlanComparison}
+                  onChange={() => setShowPlanComparison(!showPlanComparison)}
+                />
+              </Form.Group>
+              <div>
+                <small className="d-block text-muted mb-1">Active Plans: {activePlanIds.length}</small>
+                <Button 
+                  variant="outline-primary" 
+                  size="sm"
+                  href="#plans"
+                >
+                  Manage Plans
+                </Button>
+              </div>
             </Card.Body>
           </Card>
         </Col>
@@ -344,6 +568,34 @@ const Dashboard = ({ expenses, incomes }) => {
           </Card>
         </Col>
       </Row>
+
+      {/* Plan Comparison Charts */}
+      {showPlanComparison && planComparisonData && (
+        <Row className="mb-4">
+          <Col md={12}>
+            <Card className="chart-card plan-comparison-card">
+              <Card.Header>
+                <h5>Financial Plan Comparisons</h5>
+                <p className="text-muted mb-0">
+                  Compare your current expenses with your financial plans
+                </p>
+              </Card.Header>
+              <Card.Body>
+                <Row>
+                  <Col lg={6} className="mb-4 mb-lg-0">
+                    <Bar options={comparisonOptions} data={planComparisonData} height={100} />
+                  </Col>
+                  <Col lg={6}>
+                    {categoryComparisonData && (
+                      <Bar options={categoryComparisonOptions} data={categoryComparisonData} height={100} />
+                    )}
+                  </Col>
+                </Row>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+      )}
       
       <Row className="mb-4">
         <Col md={12}>
@@ -443,27 +695,22 @@ const Dashboard = ({ expenses, incomes }) => {
                         />
                       </Col>
                     </Row>
-                    
-                    <Row>
-                      <Col md={4}>
-                        <div className="summary-box income">
-                          <h6>Monthly Income</h6>
-                          <div className="amount">${personData.income.toFixed(2)}</div>
+                    <div className="financial-summary mt-4">
+                      <div className="d-flex justify-content-between mb-2">
+                        <div>Monthly Income:</div>
+                        <div className="text-success fw-bold">${personData.income.toFixed(2)}</div>
+                      </div>
+                      <div className="d-flex justify-content-between mb-2">
+                        <div>Monthly Expenses:</div>
+                        <div className="text-danger fw-bold">${personData.expenses.toFixed(2)}</div>
+                      </div>
+                      <div className="d-flex justify-content-between">
+                        <div>Monthly Balance:</div>
+                        <div className={`fw-bold ${personData.balance >= 0 ? 'text-success' : 'text-danger'}`}>
+                          ${personData.balance.toFixed(2)}
                         </div>
-                      </Col>
-                      <Col md={4}>
-                        <div className="summary-box expenses">
-                          <h6>Monthly Expenses</h6>
-                          <div className="amount">${personData.expenses.toFixed(2)}</div>
-                        </div>
-                      </Col>
-                      <Col md={4}>
-                        <div className={`summary-box balance ${personData.balance >= 0 ? 'positive' : 'negative'}`}>
-                          <h6>Monthly Balance</h6>
-                          <div className="amount">${personData.balance.toFixed(2)}</div>
-                        </div>
-                      </Col>
-                    </Row>
+                      </div>
+                    </div>
                   </Card.Body>
                 </Card>
               </Col>
@@ -472,7 +719,7 @@ const Dashboard = ({ expenses, incomes }) => {
         </Row>
       )}
       
-      {/* All persons summary when "All Users" is selected */}
+      {/* Individual financial summaries when 'All Users' is selected */}
       {selectedUsers.includes('all') && Object.keys(personIncomeExpenseData).length > 0 && (
         <Row className="mb-4">
           <Col md={12}>

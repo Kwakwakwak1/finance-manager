@@ -10,10 +10,12 @@ import ExpenseForm from './components/ExpenseForm';
 import ExpenseList from './components/ExpenseList';
 import PersonManager from './components/PersonManager';
 import IncomeManager from './components/IncomeManager';
+import PlansManager from './components/PlansManager';
 import { defaultFinancialData } from './data/expenseData';
 import { formatExpensesForFile } from './utils/dataUtils';
 import { updateExpenseDataFile } from './services/fileService';
 import { FilterProvider } from './context/FilterContext';
+import { PlansProvider } from './context/PlansContext';
 import { expenseApi, incomeApi, goalApi, personApi, checkApiAvailability } from './services/apiService';
 import './App.css';
 
@@ -643,104 +645,110 @@ function App() {
 
   return (
     <FilterProvider>
-      <div className="app">
-        <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
-        
-        <Container className="main-container">
-          {error && (
-            <div className="alert alert-warning alert-dismissible fade show" role="alert">
-              <strong>Notice:</strong> {error}
-              <button type="button" className="btn-close" onClick={() => setError(null)} aria-label="Close"></button>
-            </div>
-          )}
+      <PlansProvider expenses={expenses} incomes={incomes}>
+        <div className="app">
+          <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
           
-          {!apiConnected && (
-            <div className="alert alert-info mb-3">
-              <i className="bi bi-cloud-slash me-2"></i>
-              <strong>Offline Mode:</strong> You're working with local data stored in your browser.
-              All changes will be saved locally, but won't sync with any server.
-            </div>
-          )}
-          
-          {activeTab === 'dashboard' && (
-            <Dashboard expenses={expenses} incomes={incomes} activePersons={activePersons} />
-          )}
-          
-          {activeTab === 'expenses' && (
-            <div>
-              <h2 className="mb-4">Expense Tracker</h2>
-              <ExpenseList
-                expenses={expenses}
-                onDelete={deleteExpense}
-                onToggle={toggleExpense}
-                onEdit={editExpense}
+          <Container className="main-container">
+            {error && (
+              <div className="alert alert-warning alert-dismissible fade show" role="alert">
+                <strong>Notice:</strong> {error}
+                <button type="button" className="btn-close" onClick={() => setError(null)} aria-label="Close"></button>
+              </div>
+            )}
+            
+            {!apiConnected && (
+              <div className="alert alert-info mb-3">
+                <i className="bi bi-cloud-slash me-2"></i>
+                <strong>Offline Mode:</strong> You're working with local data stored in your browser.
+                All changes will be saved locally, but won't sync with any server.
+              </div>
+            )}
+            
+            {activeTab === 'dashboard' && (
+              <Dashboard expenses={expenses} incomes={incomes} activePersons={activePersons} />
+            )}
+            
+            {activeTab === 'expenses' && (
+              <div>
+                <h2 className="mb-4">Expense Tracker</h2>
+                <ExpenseList
+                  expenses={expenses}
+                  onDelete={deleteExpense}
+                  onToggle={toggleExpense}
+                  onEdit={editExpense}
+                  activePersons={activePersons}
+                />
+              </div>
+            )}
+            
+            {activeTab === 'income' && (
+              <IncomeManager
+                incomes={incomes}
+                onAdd={addIncome}
+                onUpdate={updateIncome}
+                onDelete={deleteIncome}
+                existingPersons={uniquePersons}
                 activePersons={activePersons}
               />
-            </div>
-          )}
-          
-          {activeTab === 'income' && (
-            <IncomeManager
-              incomes={incomes}
-              onAdd={addIncome}
-              onUpdate={updateIncome}
-              onDelete={deleteIncome}
-              existingPersons={uniquePersons}
-              activePersons={activePersons}
-            />
-          )}
-          
-          {activeTab === 'manage-people' && (
-            <PersonManager
-              expenses={expenses}
-              incomes={incomes}
-              persons={persons}
-              updatePersonName={updatePersonName}
-              saveAsDefault={saveAsDefault}
-              onAdd={addPerson}
-              onUpdate={updatePerson}
-              onDelete={deletePerson}
-              onToggleActive={togglePersonActive}
-            />
-          )}
-          
-          {activeTab === 'settings' && (
-            <div className="settings-container">
-              <h2 className="mb-4">Settings</h2>
-              <div className="settings-section">
-                <h3>Data Management</h3>
-                <div className="settings-actions">
-                  <button onClick={importDefaultData} className="btn btn-secondary">
-                    Import Default Data
-                  </button>
-                  <button onClick={saveAsDefault} className="btn btn-primary">
-                    Save Current Data as Default
-                  </button>
-                  <button onClick={clearExpenses} className="btn btn-danger">
-                    Clear All Data
-                  </button>
+            )}
+            
+            {activeTab === 'manage-people' && (
+              <PersonManager
+                expenses={expenses}
+                incomes={incomes}
+                persons={persons}
+                updatePersonName={updatePersonName}
+                saveAsDefault={saveAsDefault}
+                onAdd={addPerson}
+                onUpdate={updatePerson}
+                onDelete={deletePerson}
+                onToggleActive={togglePersonActive}
+              />
+            )}
+            
+            {activeTab === 'plans' && (
+              <PlansManager expenses={expenses} incomes={incomes} />
+            )}
+            
+            {activeTab === 'settings' && (
+              <div className="settings-container">
+                <h2 className="mb-4">Settings</h2>
+                <div className="settings-section">
+                  <h3>Data Management</h3>
+                  <div className="settings-actions">
+                    <button onClick={importDefaultData} className="btn btn-secondary">
+                      Import Default Data
+                    </button>
+                    <button onClick={saveAsDefault} className="btn btn-primary">
+                      Save Current Data as Default
+                    </button>
+                    <button onClick={clearExpenses} className="btn btn-danger">
+                      Clear All Data
+                    </button>
+                  </div>
+                </div>
+                <div className="settings-info">
+                  <p>
+                    {showImportedData && expenses.length > 0 ? 
+                      'You are currently using imported sample data. Feel free to modify or add expenses.' :
+                      'You are using your own data. You can always import sample data if needed.'}
+                  </p>
+                  <p>
+                    <strong>Note:</strong> All data is stored locally in your browser.
+                  </p>
                 </div>
               </div>
-              <div className="settings-info">
-                <p>
-                  {showImportedData && expenses.length > 0 ? 
-                    'You are currently using imported sample data. Feel free to modify or add expenses.' :
-                    'You are using your own data. You can always import sample data if needed.'}
-                </p>
-                <p>
-                  <strong>Note:</strong> All data is stored locally in your browser.
-                </p>
-              </div>
-            </div>
-          )}
-        </Container>
-        
-        <footer className="footer mt-auto py-3">
-          <Container>
-            <p className="text-center text-muted">&copy; {new Date().getFullYear()} Financial Manager</p>
+            )}
           </Container>
-        </footer>
-      </div>
+          
+          <footer className="footer mt-auto py-3">
+            <Container>
+              <p className="text-center text-muted">&copy; {new Date().getFullYear()} Financial Manager</p>
+            </Container>
+          </footer>
+        </div>
+      </PlansProvider>
     </FilterProvider>
   );
 }

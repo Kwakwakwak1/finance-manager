@@ -44,6 +44,14 @@ const Navigation = ({ activeTab, setActiveTab }) => {
             >
               <i className="bi bi-people"></i> Manage People
             </Nav.Link>
+            <Nav.Link 
+              href="#plans" 
+              active={activeTab === 'plans'}
+              onClick={() => setActiveTab('plans')}
+              className="nav-link"
+            >
+              <i className="bi bi-bar-chart-line"></i> Financial Plans
+            </Nav.Link>
           </Nav>
         </Navbar.Collapse>
       </Container>
