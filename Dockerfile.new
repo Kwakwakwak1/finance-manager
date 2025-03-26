@@ -1,0 +1,12 @@
+FROM node:18
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install express
+
+COPY server-check.js ./
+
+EXPOSE 3000
+
+CMD ["node", "server-check.js"]
