@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Form, InputGroup, Button, Card, Modal } from 'react-bootstrap';
+import { Row, Col, Form, InputGroup, Button, Card, Modal, Table, Badge } from 'react-bootstrap';
 import Expense from './Expense';
 import ExpenseForm from './ExpenseForm';
-import { calculateMonthlyAmount } from '../data/expenseData';
+import { EXPENSE_CATEGORIES, calculateMonthlyAmount } from '../data/expenseData';
 import { useFilter } from '../context/FilterContext';
+import ActionMenu from './ActionMenu';
 import './ExpenseList.css';
 
 const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
-  // console.log('ExpenseList render, onEdit type:', typeof onEdit);
-  
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterActive, setFilterActive] = useState('all');
@@ -19,6 +18,7 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
   const [expenseToEdit, setExpenseToEdit] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [viewMode, setViewMode] = useState('cards'); // 'cards' or 'table'
 
   // Use the global filter context
   const { 
@@ -106,7 +106,6 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
 
   // Handle add expense
   const handleAddExpense = (expenseData) => {
-    // console.log('Adding expense:', expenseData);
     onEdit(expenseData);
     setSuccessMessage(`Added new expense "${expenseData.title}"`);
     setShowSuccess(true);
@@ -121,7 +120,6 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
 
   // Handle update expense
   const handleUpdateExpense = (expenseData) => {
-    // console.log('Updating expense:', expenseData);
     onEdit(expenseData);
     setSuccessMessage(`Updated expense "${expenseData.title}"`);
     setShowSuccess(true);
@@ -146,36 +144,24 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
       return total + amount;
     }, 0);
 
-  // Calculate non-monthly equivalent total (only used for display when toggle is off)
-  const nonMonthlyActiveTotal = filteredExpenses
-    .filter(expense => expense.active)
-    .reduce((total, expense) => total + expense.amount, 0);
+  // Format frequency for display
+  const formatFrequency = (frequency) => {
+    if (!frequency) return '';
+    return frequency.charAt(0).toUpperCase() + frequency.slice(1);
+  };
 
   return (
     <div className="expense-list">
       <Card className="filter-card mb-4">
         <Card.Body>
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h3 className="mb-0">Manage Expenses</h3>
-            <Button 
-              variant="primary" 
-              onClick={handleShowForm}
-            >
-              Add New Expense
-            </Button>
-          </div>
-          
-          {showSuccess && (
-            <div className="alert alert-success mt-2 mb-3">
-              {successMessage}
-            </div>
-          )}
-          
-          <Row className="align-items-end">
-            <Col md={3} className="mb-3 mb-md-0">
+          <Row className="mb-3">
+            <Col lg={4} md={6} className="mb-3 mb-md-0">
               <Form.Group>
                 <Form.Label>Search</Form.Label>
                 <InputGroup>
+                  <InputGroup.Text>
+                    <i className="bi bi-search"></i>
+                  </InputGroup.Text>
                   <Form.Control
                     type="text"
                     placeholder="Search expenses..."
@@ -187,13 +173,13 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
                       variant="outline-secondary"
                       onClick={() => setSearchTerm('')}
                     >
-                      Clear
+                      <i className="bi bi-x"></i>
                     </Button>
                   )}
                 </InputGroup>
               </Form.Group>
             </Col>
-            <Col md={2} className="mb-3 mb-md-0">
+            <Col lg={3} md={6} className="mb-3 mb-md-0">
               <Form.Group>
                 <Form.Label>Category</Form.Label>
                 <Form.Select
@@ -201,54 +187,76 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
                   onChange={(e) => setFilterCategory(e.target.value)}
                 >
                   <option value="">All Categories</option>
-                  {categories.map(category => (
-                    <option key={category} value={category}>{category}</option>
+                  {Object.keys(EXPENSE_CATEGORIES).map(key => (
+                    <option key={key} value={EXPENSE_CATEGORIES[key]}>
+                      {EXPENSE_CATEGORIES[key]}
+                    </option>
                   ))}
                 </Form.Select>
               </Form.Group>
             </Col>
-            <Col md={2} className="mb-3 mb-md-0">
+            <Col lg={2} md={4} className="mb-3 mb-md-0">
               <Form.Group>
                 <Form.Label>Person</Form.Label>
-                <div>
-                  <Form.Select
-                    value={selectedUsers.includes('all') ? '' : selectedUsers.join(',')}
-                    onChange={(e) => {
-                      if (e.target.value === '') {
-                        handleSelectAllUsers(true);
-                      } else {
-                        handleUserFilterChange(e.target.value);
-                      }
-                    }}
-                  >
-                    <option value="">All Persons</option>
-                    {availableUsers.map(person => (
-                      <option key={person} value={person}>{person}</option>
-                    ))}
-                  </Form.Select>
-                </div>
-              </Form.Group>
-            </Col>
-            <Col md={2} className="mb-3 mb-md-0">
-              <Form.Group>
-                <Form.Label>Status</Form.Label>
                 <Form.Select
-                  value={filterActive}
-                  onChange={(e) => setFilterActive(e.target.value)}
+                  value={selectedUsers.includes('all') ? '' : selectedUsers.join(',')}
+                  onChange={(e) => {
+                    if (e.target.value === '') {
+                      handleSelectAllUsers(true);
+                    } else {
+                      handleUserFilterChange(e.target.value);
+                    }
+                  }}
                 >
-                  <option value="all">All</option>
-                  <option value="active">Active Only</option>
-                  <option value="inactive">Inactive Only</option>
+                  <option value="">All Persons</option>
+                  {availableUsers.map(person => (
+                    <option key={person} value={person}>{person}</option>
+                  ))}
                 </Form.Select>
               </Form.Group>
             </Col>
+            <Col lg={3} md={4} className="mb-3 mb-md-0">
+              <Form.Group>
+                <Form.Label>Status</Form.Label>
+                <div className="d-flex">
+                  <Form.Select
+                    value={filterActive}
+                    onChange={(e) => setFilterActive(e.target.value)}
+                    className="me-2"
+                  >
+                    <option value="all">All</option>
+                    <option value="active">Active Only</option>
+                    <option value="inactive">Inactive Only</option>
+                  </Form.Select>
+                  <Button
+                    variant="outline-secondary"
+                    className="view-toggle-btn"
+                    onClick={() => setViewMode(viewMode === 'cards' ? 'table' : 'cards')}
+                    title={`Switch to ${viewMode === 'cards' ? 'table' : 'card'} view`}
+                  >
+                    <i className={`bi bi-${viewMode === 'cards' ? 'table' : 'grid-3x3-gap'}`}></i>
+                  </Button>
+                </div>
+              </Form.Group>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={9}>
+              <Form.Check
+                type="switch"
+                id="monthly-equivalent"
+                label="Show monthly equivalent amounts"
+                checked={showMonthlyEquivalent}
+                onChange={(e) => setShowMonthlyEquivalent(e.target.checked)}
+              />
+            </Col>
             <Col md={3}>
               <Form.Group>
-                <Form.Label>Sort By</Form.Label>
-                <InputGroup>
+                <InputGroup className="sort-group">
                   <Form.Select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
+                    size="sm"
                   >
                     <option value="date">Date</option>
                     <option value="amount">Amount</option>
@@ -259,26 +267,22 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
                   <Button
                     variant="outline-secondary"
                     onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                    size="sm"
                   >
-                    {sortDirection === 'asc' ? '↑' : '↓'}
+                    <i className={`bi bi-sort-${sortDirection === 'asc' ? 'up' : 'down'}`}></i>
                   </Button>
                 </InputGroup>
               </Form.Group>
             </Col>
           </Row>
-          <Row className="mt-3">
-            <Col>
-              <Form.Check
-                type="switch"
-                id="monthly-equivalent"
-                label="Show monthly equivalent amounts for individual expenses"
-                checked={showMonthlyEquivalent}
-                onChange={(e) => setShowMonthlyEquivalent(e.target.checked)}
-              />
-            </Col>
-          </Row>
         </Card.Body>
       </Card>
+
+      {showSuccess && (
+        <div className="alert alert-success mb-4">
+          {successMessage}
+        </div>
+      )}
 
       <div className="mb-4 total-card">
         <h3>
@@ -305,19 +309,127 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
         <div className="text-center p-5 empty-state">
           <h4>No expenses found</h4>
           <p>Try adjusting your filters or add a new expense.</p>
+          <Button 
+            variant="outline-primary"
+            size="sm"
+            onClick={handleShowForm}
+            className="mt-2"
+          >
+            <i className="bi bi-plus-circle me-1"></i> Add New Expense
+          </Button>
         </div>
       ) : (
-        sortedExpenses.map(expense => (
-          <Expense
-            key={expense.id}
-            expense={expense}
-            onDelete={onDelete}
-            onToggle={onToggle}
-            onEdit={handleEditExpense}
-            showMonthlyEquivalent={showMonthlyEquivalent}
-          />
-        ))
+        <>
+          {viewMode === 'cards' ? (
+            <div className="expense-cards-container">
+              {sortedExpenses.map(expense => (
+                <Expense
+                  key={expense.id}
+                  expense={expense}
+                  onDelete={onDelete}
+                  onToggle={onToggle}
+                  onEdit={handleEditExpense}
+                  showMonthlyEquivalent={showMonthlyEquivalent}
+                />
+              ))}
+            </div>
+          ) : (
+            <Card className="mb-4 table-card">
+              <Card.Body className="p-0">
+                <div className="table-responsive">
+                  <Table hover className="expense-table mb-0">
+                    <thead>
+                      <tr>
+                        <th>Expense</th>
+                        <th>Category</th>
+                        <th>Person</th>
+                        <th>Amount</th>
+                        <th>Frequency</th>
+                        {showMonthlyEquivalent && <th>Monthly Equiv.</th>}
+                        <th className="text-center">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedExpenses.map(expense => {
+                        const monthlyAmount = showMonthlyEquivalent && expense.frequency 
+                          ? calculateMonthlyAmount(expense.amount, expense.frequency)
+                          : null;
+                        
+                        return (
+                          <tr 
+                            key={expense.id} 
+                            className={!expense.active ? 'table-secondary' : ''}
+                          >
+                            <td>
+                              <div className="d-flex align-items-center">
+                                <div className="expense-name fw-medium">
+                                  {expense.title || expense.name}
+                                  {!expense.active && (
+                                    <Badge 
+                                      bg="warning" 
+                                      text="dark" 
+                                      className="ms-2 inactive-badge"
+                                    >
+                                      Inactive
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                            <td>
+                              <Badge 
+                                bg="light" 
+                                text="dark" 
+                                className="category-badge"
+                              >
+                                {expense.category}
+                              </Badge>
+                            </td>
+                            <td>
+                              {expense.person && (
+                                <Badge bg="secondary" className="person-badge">
+                                  {expense.person}
+                                </Badge>
+                              )}
+                            </td>
+                            <td className="fw-medium">${expense.amount.toFixed(2)}</td>
+                            <td>{formatFrequency(expense.frequency)}</td>
+                            {showMonthlyEquivalent && (
+                              <td className="monthly-amount">
+                                ${monthlyAmount.toFixed(2)}
+                              </td>
+                            )}
+                            <td className="text-center">
+                              <ActionMenu 
+                                onEdit={() => handleEditExpense(expense)}
+                                onDelete={() => onDelete(expense.id)}
+                                onToggle={() => onToggle(expense.id)}
+                                isActive={expense.active}
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </Table>
+                </div>
+              </Card.Body>
+            </Card>
+          )}
+        </>
       )}
+      
+      {/* Add Expense Button (Fixed) */}
+      <div className="floating-action-btn">
+        <Button 
+          variant="primary" 
+          size="lg" 
+          className="rounded-circle shadow" 
+          onClick={handleShowForm}
+        >
+          <i className="bi bi-plus-lg"></i>
+        </Button>
+      </div>
       
       {/* Expense Form Modal */}
       <Modal show={showForm} onHide={handleCloseForm} size="lg">
@@ -325,8 +437,6 @@ const ExpenseList = ({ expenses, onDelete, onToggle, onEdit }) => {
           <Modal.Title>{expenseToEdit ? 'Edit Expense' : 'Add New Expense'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {/* {console.log('Modal rendering, handleAddExpense type:', typeof handleAddExpense)}
-          {console.log('Modal rendering, handleUpdateExpense type:', typeof handleUpdateExpense)} */}
           <ExpenseForm 
             addExpense={handleAddExpense} 
             editExpense={handleUpdateExpense} 

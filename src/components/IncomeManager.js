@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Form, Button, Row, Col, ListGroup, Alert, Modal, Table, InputGroup } from 'react-bootstrap';
+import { Card, Form, Button, Row, Col, Alert, Modal, Table, InputGroup, Badge } from 'react-bootstrap';
 import { v4 as uuidv4 } from 'uuid';
 import { FREQUENCY_OPTIONS, calculateMonthlyAmount } from '../data/expenseData';
 import { useFilter } from '../context/FilterContext';
+import ActionMenu from './ActionMenu';
 import './IncomeManager.css';
 
-const IncomeManager = ({ incomes, onAdd, onUpdate, onDelete, existingPersons }) => {
+const IncomeManager = ({ incomes, onAdd, onUpdate, onDelete, onToggle, existingPersons }) => {
   const [showForm, setShowForm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [incomeToEdit, setIncomeToEdit] = useState(null);
+  const [filterActive, setFilterActive] = useState('all');
   const [formData, setFormData] = useState({
     id: '',
     person: '',
@@ -38,8 +40,13 @@ const IncomeManager = ({ incomes, onAdd, onUpdate, onDelete, existingPersons }) 
     }
   }, [incomes, updateAvailableUsers]);
 
-  // Filter incomes based on selected users
-  const filteredIncomes = filterDataBySelectedUsers(incomes);
+  // Filter incomes based on selected users and active state
+  const filteredIncomes = filterDataBySelectedUsers(incomes).filter(income => {
+    const matchesActive = filterActive === 'all' || 
+                         (filterActive === 'active' && income.active !== false) || 
+                         (filterActive === 'inactive' && income.active === false);
+    return matchesActive;
+  });
 
   // Reset form when closing
   const resetForm = () => {
@@ -160,8 +167,14 @@ const IncomeManager = ({ incomes, onAdd, onUpdate, onDelete, existingPersons }) 
     : selectedUsers;
   
   personsToShow.forEach(person => {
-    incomesByPerson[person] = incomes.filter(income => income.person === person);
+    incomesByPerson[person] = filteredIncomes.filter(income => income.person === person);
   });
+
+  // Format frequency for display
+  const formatFrequency = (frequency) => {
+    const option = FREQUENCY_OPTIONS.find(f => f.value === frequency);
+    return option ? option.label : frequency;
+  };
 
   return (
     <div className="income-manager">
@@ -169,147 +182,172 @@ const IncomeManager = ({ incomes, onAdd, onUpdate, onDelete, existingPersons }) 
       
       <Card className="filter-card mb-4">
         <Card.Body>
-          <Form>
-            <Form.Group>
-              <Form.Label>Filter by Person</Form.Label>
-              <div className="d-flex flex-wrap">
-                <Form.Check
-                  type="checkbox"
-                  id="income-user-all"
-                  label="All Users"
-                  className="me-3 mb-2"
-                  checked={selectedUsers.includes('all')}
-                  onChange={(e) => handleSelectAllUsers(e.target.checked)}
-                />
-                {availableUsers.map(user => (
+          <Row>
+            <Col md={8}>
+              <Form.Group>
+                <Form.Label>Filter by Person</Form.Label>
+                <div className="d-flex flex-wrap">
                   <Form.Check
-                    key={user}
                     type="checkbox"
-                    id={`income-user-${user}`}
-                    label={user}
+                    id="income-user-all"
+                    label="All Users"
                     className="me-3 mb-2"
-                    checked={selectedUsers.includes(user)}
-                    onChange={() => handleUserFilterChange(user)}
+                    checked={selectedUsers.includes('all')}
+                    onChange={(e) => handleSelectAllUsers(e.target.checked)}
                   />
-                ))}
-              </div>
-            </Form.Group>
-          </Form>
+                  {availableUsers.map(user => (
+                    <Form.Check
+                      key={user}
+                      type="checkbox"
+                      id={`income-user-${user}`}
+                      label={user}
+                      className="me-3 mb-2"
+                      checked={selectedUsers.includes(user)}
+                      onChange={() => handleUserFilterChange(user)}
+                    />
+                  ))}
+                </div>
+              </Form.Group>
+            </Col>
+            <Col md={4}>
+              <Form.Group>
+                <Form.Label>Status</Form.Label>
+                <Form.Select
+                  value={filterActive}
+                  onChange={(e) => setFilterActive(e.target.value)}
+                >
+                  <option value="all">All</option>
+                  <option value="active">Active Only</option>
+                  <option value="inactive">Inactive Only</option>
+                </Form.Select>
+              </Form.Group>
+            </Col>
+          </Row>
         </Card.Body>
       </Card>
       
-      <Card className="income-manager-card mb-4">
-        <Card.Body>
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h3 className="mb-0">Manage Income Sources</h3>
-            <Button 
-              variant="primary" 
-              onClick={handleShowForm}
-            >
-              Add New Income Source
-            </Button>
-          </div>
-          
-          {showSuccess && (
-            <Alert variant="success" className="mt-3 mb-4">
-              {successMessage}
-            </Alert>
-          )}
-          
-          {personsToShow.length > 0 ? (
-            <Row>
-              {personsToShow.map(person => (
-                <Col md={6} key={person} className="mb-4">
-                  <Card>
-                    <Card.Header>
-                      <h5>{person}'s Income Sources</h5>
-                    </Card.Header>
-                    <Card.Body>
-                      {incomesByPerson[person] && incomesByPerson[person].length > 0 ? (
-                        <Table striped bordered hover>
-                          <thead>
-                            <tr>
-                              <th>Source</th>
-                              <th>Name</th>
-                              <th>Amount</th>
-                              <th>Frequency</th>
-                              <th>Monthly Equiv.</th>
-                              <th>Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {incomesByPerson[person].map(income => {
-                              const monthlyAmount = calculateMonthlyAmount(income.amount, income.frequency);
-                              const netMonthly = income.isGross 
-                                ? calculateNetIncome(monthlyAmount, income.taxRate) 
-                                : monthlyAmount;
-                              
-                              return (
-                                <tr key={income.id}>
-                                  <td>{income.source}</td>
-                                  <td>{income.name}</td>
-                                  <td>
-                                    ${income.amount.toFixed(2)}
-                                    {income.isGross && <span className="badge bg-info ms-1">Gross</span>}
-                                  </td>
-                                  <td>{FREQUENCY_OPTIONS.find(f => f.value === income.frequency)?.label || income.frequency}</td>
-                                  <td>
-                                    ${netMonthly.toFixed(2)}
-                                    <small className="d-block text-muted">
-                                      {income.isGross && `After ${(income.taxRate * 100).toFixed(0)}% tax`}
-                                    </small>
-                                  </td>
-                                  <td>
-                                    <Button 
-                                      variant="outline-primary" 
-                                      size="sm"
-                                      className="me-2"
-                                      onClick={() => handleEditIncome(income)}
-                                    >
-                                      Edit
-                                    </Button>
-                                    <Button 
-                                      variant="outline-danger" 
-                                      size="sm"
-                                      onClick={() => handleDeleteIncome(income.id)}
-                                    >
-                                      Delete
-                                    </Button>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                          <tfoot>
-                            <tr>
-                              <th colSpan={4} className="text-end">Total Monthly Income:</th>
-                              <th>
-                                ${incomesByPerson[person]
-                                  .reduce((sum, income) => {
-                                    const monthlyAmount = calculateMonthlyAmount(income.amount, income.frequency);
-                                    return sum + (income.isGross 
-                                      ? calculateNetIncome(monthlyAmount, income.taxRate) 
-                                      : monthlyAmount);
-                                  }, 0)
-                                  .toFixed(2)}
-                              </th>
-                              <th></th>
-                            </tr>
-                          </tfoot>
-                        </Table>
-                      ) : (
-                        <p className="text-center">No income sources added yet.</p>
-                      )}
-                    </Card.Body>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          ) : (
-            <p>No persons available. Please add persons in the Person Manager.</p>
-          )}
-        </Card.Body>
-      </Card>
+      {/* Success Alert */}
+      {showSuccess && (
+        <Alert variant="success" className="mb-4">
+          {successMessage}
+        </Alert>
+      )}
+      
+      {personsToShow.map(person => (
+        <Card key={person} className="mb-4 income-card">
+          <Card.Header className="d-flex justify-content-between align-items-center">
+            <h4 className="mb-0">{person}'s Income</h4>
+            <div className="income-header-actions">
+              <Button variant="primary" size="sm" onClick={handleShowForm}>
+                <i className="bi bi-plus-lg me-1"></i> Add Income
+              </Button>
+            </div>
+          </Card.Header>
+          <Card.Body className="p-0">
+            {incomesByPerson[person] && incomesByPerson[person].length > 0 ? (
+              <Table responsive hover className="income-table mb-0">
+                <thead>
+                  <tr>
+                    <th>Source</th>
+                    <th>Name</th>
+                    <th>Amount</th>
+                    <th>Frequency</th>
+                    <th>Monthly Equiv.</th>
+                    <th className="text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {incomesByPerson[person].map(income => {
+                    const monthlyAmount = calculateMonthlyAmount(income.amount, income.frequency);
+                    const netMonthly = income.isGross 
+                      ? calculateNetIncome(monthlyAmount, income.taxRate) 
+                      : monthlyAmount;
+                    
+                    return (
+                      <tr 
+                        key={income.id} 
+                        className={income.active === false ? 'table-secondary income-inactive' : ''}
+                      >
+                        <td>
+                          <div className="income-source fw-medium">{income.source}</div>
+                        </td>
+                        <td>{income.name}</td>
+                        <td>
+                          <div className="d-flex align-items-center">
+                            <span className="fw-medium">${income.amount.toFixed(2)}</span>
+                            {income.isGross && (
+                              <Badge bg="info" className="ms-2 gross-badge">Gross</Badge>
+                            )}
+                          </div>
+                        </td>
+                        <td>{formatFrequency(income.frequency)}</td>
+                        <td>
+                          <div className="fw-medium">${netMonthly.toFixed(2)}</div>
+                          {income.isGross && (
+                            <small className="text-muted">
+                              After {(income.taxRate * 100).toFixed(0)}% tax
+                            </small>
+                          )}
+                        </td>
+                        <td className="text-center">
+                          <ActionMenu 
+                            onEdit={() => handleEditIncome(income)}
+                            onDelete={() => handleDeleteIncome(income.id)}
+                            onToggle={() => onToggle(income.id)}
+                            isActive={income.active !== false}
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot className="table-group-divider">
+                  <tr>
+                    <th colSpan={4} className="text-end">Total Monthly Income:</th>
+                    <th>
+                      ${incomesByPerson[person]
+                        .filter(income => income.active !== false)
+                        .reduce((sum, income) => {
+                          const monthlyAmount = calculateMonthlyAmount(income.amount, income.frequency);
+                          return sum + (income.isGross 
+                            ? calculateNetIncome(monthlyAmount, income.taxRate) 
+                            : monthlyAmount);
+                        }, 0)
+                        .toFixed(2)}
+                    </th>
+                    <th></th>
+                  </tr>
+                </tfoot>
+              </Table>
+            ) : (
+              <div className="p-4 text-center">
+                <p className="mb-0">No income sources added yet.</p>
+              </div>
+            )}
+          </Card.Body>
+        </Card>
+      ))}
+
+      {personsToShow.length === 0 && (
+        <Card className="mb-4">
+          <Card.Body className="text-center p-4">
+            <p>No persons available or selected. Please add or select persons.</p>
+            <Button variant="primary" onClick={() => handleSelectAllUsers(true)}>Show All Persons</Button>
+          </Card.Body>
+        </Card>
+      )}
+
+      {/* Add Income Button (Fixed) */}
+      <div className="floating-action-btn">
+        <Button 
+          variant="primary" 
+          size="lg" 
+          className="rounded-circle shadow" 
+          onClick={handleShowForm}
+        >
+          <i className="bi bi-plus-lg"></i>
+        </Button>
+      </div>
 
       {/* Income Form Modal */}
       <Modal show={showForm} onHide={handleCloseForm}>
@@ -427,7 +465,7 @@ const IncomeManager = ({ incomes, onAdd, onUpdate, onDelete, existingPersons }) 
                 Cancel
               </Button>
               <Button variant="primary" type="submit">
-                {incomeToEdit ? 'Update' : 'Add'} Income Source
+                {incomeToEdit ? 'Update' : 'Add'} Income
               </Button>
             </div>
           </Form>

@@ -97,3 +97,19 @@ exports.deleteIncome = async (req, res) => {
     return res.status(500).json({ message: 'Error deleting income', error: error.message });
   }
 };
+
+// Toggle income active state
+exports.toggleIncome = async (req, res) => {
+  try {
+    const income = await Income.findByPk(req.params.id);
+    if (!income) {
+      return res.status(404).json({ message: 'Income not found' });
+    }
+    
+    await income.update({ active: !income.active });
+    return res.status(200).json(income);
+  } catch (error) {
+    logger.error(`Error toggling income ${req.params.id}: ${error.message}`);
+    return res.status(500).json({ message: 'Error toggling income', error: error.message });
+  }
+};

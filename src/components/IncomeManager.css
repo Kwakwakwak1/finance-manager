@@ -63,4 +63,90 @@
 
 .modal-title {
   font-weight: 600;
+}
+
+.income-manager h2 {
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+.filter-card {
+  background-color: #f8f9fa;
+  border: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.income-card {
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.income-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.income-card .card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 0.75rem 1rem;
+}
+
+.income-table {
+  margin-bottom: 0;
+}
+
+.income-table th {
+  font-weight: 600;
+  background-color: #f8f9fa;
+  border-bottom-width: 1px;
+  padding: 0.75rem 1rem;
+}
+
+.income-table td {
+  padding: 0.75rem 1rem;
+  vertical-align: middle;
+}
+
+.income-source {
+  color: #495057;
+}
+
+.gross-badge {
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.income-inactive {
+  opacity: 0.7;
+}
+
+.income-inactive .income-source {
+  text-decoration: line-through;
+  text-decoration-color: rgba(0, 0, 0, 0.3);
+  text-decoration-thickness: 1px;
+}
+
+.floating-action-btn {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 1000;
+}
+
+.floating-action-btn .btn {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.floating-action-btn .btn i {
+  font-size: 1.5rem;
 } 

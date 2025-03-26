@@ -255,6 +255,23 @@ function App() {
     }
   };
 
+  // Toggle income active state
+  const toggleIncome = async (id) => {
+    try {
+      if (apiConnected) {
+        await incomeApi.toggle(id);
+      }
+      setIncomes(
+        incomes.map((income) =>
+          income.id === id ? { ...income, active: !income.active } : income
+        )
+      );
+    } catch (err) {
+      console.error('Error toggling income:', err);
+      setError('Failed to update income. Please try again.');
+    }
+  };
+
   // Update income
   const updateIncome = async (updatedIncome) => {
     try {
@@ -688,6 +705,7 @@ function App() {
                 onAdd={addIncome}
                 onUpdate={updateIncome}
                 onDelete={deleteIncome}
+                onToggle={toggleIncome}
                 existingPersons={uniquePersons}
                 activePersons={activePersons}
               />

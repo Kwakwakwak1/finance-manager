@@ -25,6 +25,8 @@ const PlansManager = ({ expenses, incomes }) => {
   const [activeTab, setActiveTab] = useState('expenses');
   const [peopleInPlan, setPeopleInPlan] = useState([]);
   const [peopleEnabledStatus, setPeopleEnabledStatus] = useState({});
+  const [editedPlanName, setEditedPlanName] = useState('');
+  const [editedPlanDescription, setEditedPlanDescription] = useState('');
 
   // Get the selected plan
   const selectedPlan = plans.find(plan => plan.id === selectedPlanId);
@@ -70,6 +72,10 @@ const PlansManager = ({ expenses, incomes }) => {
       });
       
       setPeopleEnabledStatus(statusMap);
+      
+      // Set edited plan name and description to current values
+      setEditedPlanName(selectedPlan.name);
+      setEditedPlanDescription(selectedPlan.description || '');
     }
   }, [selectedPlan]);
 
@@ -91,6 +97,27 @@ const PlansManager = ({ expenses, incomes }) => {
       setSelectedPlanId(null);
       setEditMode(false);
     }
+  };
+
+  // Toggle edit mode and handle saving if needed
+  const handleEditToggle = () => {
+    if (editMode) {
+      // If we're exiting edit mode, save any name/description changes
+      if (selectedPlanId && editedPlanName.trim() && 
+         (editedPlanName !== selectedPlan.name || editedPlanDescription !== (selectedPlan.description || ''))) {
+        updatePlan(selectedPlanId, {
+          ...selectedPlan,
+          name: editedPlanName,
+          description: editedPlanDescription
+        });
+      }
+      
+      // Reset to original values when exiting edit mode without saving
+      setEditedPlanName(selectedPlan.name);
+      setEditedPlanDescription(selectedPlan.description || '');
+    }
+    
+    setEditMode(!editMode);
   };
 
   // Handle toggling expense enabled/disabled in a plan
@@ -242,16 +269,42 @@ const PlansManager = ({ expenses, incomes }) => {
           {selectedPlan ? (
             <Card>
               <Card.Header className="d-flex justify-content-between align-items-center">
-                <div>
-                  <h4>{selectedPlan.name}</h4>
-                  {selectedPlan.description && <small className="text-muted">{selectedPlan.description}</small>}
+                <div className="w-75">
+                  {!editMode ? (
+                    <>
+                      <h4 className="mb-1">{selectedPlan.name}</h4>
+                      {selectedPlan.description && <small className="text-muted">{selectedPlan.description}</small>}
+                    </>
+                  ) : (
+                    <Form className="plan-name-edit">
+                      <Form.Group className="mb-3">
+                        <Form.Label>Plan Name</Form.Label>
+                        <Form.Control 
+                          type="text" 
+                          value={editedPlanName}
+                          onChange={(e) => setEditedPlanName(e.target.value)}
+                          placeholder="Plan Name"
+                        />
+                      </Form.Group>
+                      <Form.Group>
+                        <Form.Label>Description (Optional)</Form.Label>
+                        <Form.Control 
+                          as="textarea" 
+                          rows={2} 
+                          value={editedPlanDescription}
+                          onChange={(e) => setEditedPlanDescription(e.target.value)}
+                          placeholder="Plan Description (optional)"
+                        />
+                      </Form.Group>
+                    </Form>
+                  )}
                 </div>
                 <div>
                   <Button 
                     variant={editMode ? "outline-primary" : "primary"} 
                     size="sm" 
                     className="mr-2"
-                    onClick={() => setEditMode(!editMode)}
+                    onClick={handleEditToggle}
                   >
                     <i className={`bi ${editMode ? 'bi-eye' : 'bi-pencil'}`}></i> {editMode ? "View Impact" : "Edit Plan"}
                   </Button>
@@ -273,7 +326,7 @@ const PlansManager = ({ expenses, incomes }) => {
                           <Card.Title className="mb-3">
                             <i className="bi bi-people"></i> Enable/Disable by Person
                           </Card.Title>
-                          <Row>
+                          <Row className="person-toggles-container">
                             {peopleInPlan.map(person => (
                               <Col key={person} md={4} sm={6} className="mb-2">
                                 <div className="d-flex align-items-center person-toggle">
@@ -288,7 +341,7 @@ const PlansManager = ({ expenses, incomes }) => {
                               </Col>
                             ))}
                           </Row>
-                          <small className="text-muted mt-2 d-block">
+                          <small className="text-muted mt-3 d-block">
                             Toggle all expenses and incomes for a specific person at once
                           </small>
                         </Card.Body>
@@ -301,84 +354,88 @@ const PlansManager = ({ expenses, incomes }) => {
                       className="mb-3"
                     >
                       <Tab eventKey="expenses" title="Expenses">
-                        <Table striped bordered hover responsive className="plan-table">
-                          <thead>
-                            <tr>
-                              <th>Enabled</th>
-                              <th>Person</th>
-                              <th>Expense</th>
-                              <th>Category</th>
-                              <th>Amount</th>
-                              <th>Frequency</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {selectedPlan.expenses.map(expense => {
-                              return (
-                                <tr 
-                                  key={expense.id} 
-                                  className={!expense.enabled ? 'disabled-item' : ''}
-                                >
-                                  <td className="text-center">
-                                    <Form.Check 
-                                      type="switch"
-                                      id={`expense-switch-${expense.id}`}
-                                      checked={expense.enabled}
-                                      onChange={(e) => handleToggleExpense(expense.id, e.target.checked)}
-                                    />
-                                  </td>
-                                  <td>{expense.person}</td>
-                                  <td>{expense.name || expense.title}</td>
-                                  <td>{expense.category}</td>
-                                  <td className="text-right">
-                                    {formatCurrency(expense.amount)}
-                                  </td>
-                                  <td>{expense.frequency || 'monthly'}</td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </Table>
+                        <div className="plan-table-container">
+                          <Table striped bordered hover responsive className="plan-table">
+                            <thead>
+                              <tr>
+                                <th width="90">Enabled</th>
+                                <th width="130">Person</th>
+                                <th>Expense</th>
+                                <th width="130">Category</th>
+                                <th width="110" className="text-right">Amount</th>
+                                <th width="110">Frequency</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {selectedPlan.expenses.map(expense => {
+                                return (
+                                  <tr 
+                                    key={expense.id} 
+                                    className={!expense.enabled ? 'disabled-item' : ''}
+                                  >
+                                    <td className="text-center">
+                                      <Form.Check 
+                                        type="switch"
+                                        id={`expense-switch-${expense.id}`}
+                                        checked={expense.enabled}
+                                        onChange={(e) => handleToggleExpense(expense.id, e.target.checked)}
+                                      />
+                                    </td>
+                                    <td>{expense.person}</td>
+                                    <td>{expense.name || expense.title}</td>
+                                    <td>{expense.category}</td>
+                                    <td className="text-right">
+                                      {formatCurrency(expense.amount)}
+                                    </td>
+                                    <td>{expense.frequency || 'monthly'}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </Table>
+                        </div>
                       </Tab>
                       <Tab eventKey="incomes" title="Incomes">
-                        <Table striped bordered hover responsive className="plan-table">
-                          <thead>
-                            <tr>
-                              <th>Enabled</th>
-                              <th>Person</th>
-                              <th>Source</th>
-                              <th>Name</th>
-                              <th>Amount</th>
-                              <th>Frequency</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {selectedPlan.incomes.map(income => {
-                              return (
-                                <tr 
-                                  key={income.id} 
-                                  className={!income.enabled ? 'disabled-item' : ''}
-                                >
-                                  <td className="text-center">
-                                    <Form.Check 
-                                      type="switch"
-                                      id={`income-switch-${income.id}`}
-                                      checked={income.enabled}
-                                      onChange={(e) => handleToggleIncome(income.id, e.target.checked)}
-                                    />
-                                  </td>
-                                  <td>{income.person}</td>
-                                  <td>{income.source}</td>
-                                  <td>{income.name}</td>
-                                  <td className="text-right">
-                                    {formatCurrency(income.amount)}
-                                  </td>
-                                  <td>{income.frequency}</td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </Table>
+                        <div className="plan-table-container">
+                          <Table striped bordered hover responsive className="plan-table">
+                            <thead>
+                              <tr>
+                                <th width="90">Enabled</th>
+                                <th width="130">Person</th>
+                                <th width="130">Source</th>
+                                <th>Name</th>
+                                <th width="110" className="text-right">Amount</th>
+                                <th width="110">Frequency</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {selectedPlan.incomes.map(income => {
+                                return (
+                                  <tr 
+                                    key={income.id} 
+                                    className={!income.enabled ? 'disabled-item' : ''}
+                                  >
+                                    <td className="text-center">
+                                      <Form.Check 
+                                        type="switch"
+                                        id={`income-switch-${income.id}`}
+                                        checked={income.enabled}
+                                        onChange={(e) => handleToggleIncome(income.id, e.target.checked)}
+                                      />
+                                    </td>
+                                    <td>{income.person}</td>
+                                    <td>{income.source}</td>
+                                    <td>{income.name}</td>
+                                    <td className="text-right">
+                                      {formatCurrency(income.amount)}
+                                    </td>
+                                    <td>{income.frequency}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </Table>
+                        </div>
                       </Tab>
                     </Tabs>
                   </>

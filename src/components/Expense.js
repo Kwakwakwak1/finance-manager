@@ -1,10 +1,10 @@
 import React from 'react';
-import { Button, Card, Badge } from 'react-bootstrap';
+import { Card, Badge, Button } from 'react-bootstrap';
+import ActionMenu from './ActionMenu';
+import { calculateMonthlyAmount } from '../data/expenseData';
 import './Expense.css';
 
-const Expense = ({ expense, onDelete, onToggle, onEdit }) => {
-  // console.log('Expense component, onEdit type:', typeof onEdit);
-  
+const Expense = ({ expense, onDelete, onToggle, onEdit, showMonthlyEquivalent }) => {
   // Helper function to format frequency for display
   const formatFrequency = (frequency) => {
     if (!frequency) return '';
@@ -13,15 +13,10 @@ const Expense = ({ expense, onDelete, onToggle, onEdit }) => {
     return frequency.charAt(0).toUpperCase() + frequency.slice(1);
   };
 
-  // Safe edit handler
-  const handleEdit = () => {
-    if (typeof onEdit === 'function') {
-      onEdit(expense);
-    } else {
-      console.error('onEdit is not a function in Expense component');
-      alert('There was an error editing this expense. Please try again later.');
-    }
-  };
+  // Calculate monthly equivalent if needed
+  const monthlyEquivalent = showMonthlyEquivalent && expense.frequency 
+    ? calculateMonthlyAmount(expense.amount, expense.frequency)
+    : null;
 
   return (
     <Card 
@@ -29,49 +24,51 @@ const Expense = ({ expense, onDelete, onToggle, onEdit }) => {
     >
       <Card.Body>
         <div className="d-flex justify-content-between align-items-center">
-          <div>
-            <Card.Title className="d-flex align-items-center">
+          <div className="expense-info">
+            <div className="expense-title">
               {expense.title || expense.name}
               {expense.person && (
-                <Badge bg="secondary" className="ms-2">{expense.person}</Badge>
+                <Badge bg="secondary" className="ms-2 person-badge">{expense.person}</Badge>
               )}
-            </Card.Title>
-            <Card.Subtitle className="mb-2 text-muted">
-              ${expense.amount.toFixed(2)} 
+              {!expense.active && (
+                <Badge bg="warning" text="dark" className="ms-2 inactive-badge">Inactive</Badge>
+              )}
+            </div>
+            <div className="expense-amount">
+              <span className="amount-value">${expense.amount.toFixed(2)}</span>
               {expense.frequency && (
-                <span className="frequency-badge"> ({formatFrequency(expense.frequency)})</span>
+                <span className="frequency-badge">({formatFrequency(expense.frequency)})</span>
               )}
-            </Card.Subtitle>
-            <Card.Text>
-              <small>Category: {expense.category}</small>
-              <br />
-              <small>Date: {new Date(expense.date).toLocaleDateString()}</small>
-            </Card.Text>
+              {monthlyEquivalent && (
+                <span className="monthly-equivalent">
+                  = ${monthlyEquivalent.toFixed(2)}/mo
+                </span>
+              )}
+            </div>
+            <div className="expense-details">
+              <span className="detail-item category-item">
+                <i className="bi bi-tag me-1"></i> {expense.category}
+              </span>
+              <span className="detail-item date-item">
+                <i className="bi bi-calendar-date me-1"></i> {new Date(expense.date).toLocaleDateString()}
+              </span>
+            </div>
           </div>
           <div className="expense-actions">
-            <Button 
-              variant="outline-primary" 
-              size="sm" 
-              className="me-2"
-              onClick={handleEdit}
-            >
-              Edit
-            </Button>
-            <Button 
-              variant="outline-danger" 
-              size="sm" 
-              className="me-2"
-              onClick={() => onDelete(expense.id)}
-            >
-              Delete
-            </Button>
-            <Button 
-              variant={expense.active ? "outline-warning" : "outline-success"} 
+            <Button
+              variant="outline-primary"
               size="sm"
-              onClick={() => onToggle(expense.id)}
+              className="me-2 edit-button"
+              onClick={() => onEdit(expense)}
             >
-              {expense.active ? 'Disable' : 'Enable'}
+              <i className="bi bi-pencil"></i> Edit
             </Button>
+            <ActionMenu 
+              onEdit={() => onEdit(expense)}
+              onDelete={() => onDelete(expense.id)}
+              onToggle={() => onToggle(expense.id)}
+              isActive={expense.active}
+            />
           </div>
         </div>
       </Card.Body>

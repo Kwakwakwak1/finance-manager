@@ -1,74 +1,163 @@
-.person-manager-card {
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
-  border: none;
-  background: linear-gradient(to bottom right, #ffffff, #f8f9fa);
+.person-manager {
+  padding: 15px;
+  margin-bottom: 30px;
 }
 
-.person-manager-card .card-title {
-  color: #343a40;
+.person-manager h2 {
+  color: #2a3f54;
   font-weight: 600;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid #e9ecef;
-  padding-bottom: 0.75rem;
+  margin-bottom: 20px;
 }
 
-.person-manager-card .form-label {
+.person-manager .card {
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: none;
+  overflow: hidden;
+}
+
+.person-manager .card-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+  padding: 15px 20px;
+}
+
+.person-manager .card-header h4 {
+  color: #2a3f54;
+  font-weight: 600;
+  margin: 0;
+}
+
+.person-manager .card-body {
+  padding: 20px;
+}
+
+.person-manager .card-body.p-0 {
+  padding: 0;
+}
+
+/* Table styling */
+.person-table {
+  margin-bottom: 0;
+}
+
+.person-table th {
+  background-color: #f8f9fa;
+  color: #495057;
+  font-weight: 600;
+  border-top: none;
+  padding: 12px 15px;
+}
+
+.person-table td {
+  padding: 12px 15px;
+  vertical-align: middle;
+}
+
+.person-table tbody tr:hover {
+  background-color: rgba(0, 123, 255, 0.03);
+}
+
+/* Badge styling */
+.status-badge {
+  padding: 6px 10px;
+  font-weight: 500;
+  border-radius: 30px;
+}
+
+.data-badge {
+  padding: 5px 10px;
+  font-weight: 500;
+  border-radius: 30px;
+}
+
+/* Form styling */
+.form-label {
   font-weight: 500;
   color: #495057;
 }
 
-.person-manager-card table {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+.form-control, .form-select {
+  border-radius: 8px;
+  padding: 10px 15px;
+  border: 1px solid #ced4da;
+  transition: all 0.2s ease;
 }
 
-.person-manager-card th {
-  background-color: #f8f9fa;
+.form-control:focus, .form-select:focus {
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+  border-color: #80bdff;
+}
+
+/* Button styling */
+.btn {
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.875rem;
+}
+
+.btn-primary {
+  background-color: #3498db;
+  border-color: #3498db;
+}
+
+.btn-primary:hover {
+  background-color: #2980b9;
+  border-color: #2980b9;
+}
+
+.btn-success {
+  background-color: #2ecc71;
+  border-color: #2ecc71;
+}
+
+.btn-success:hover {
+  background-color: #27ae60;
+  border-color: #27ae60;
+}
+
+.save-default-btn {
+  margin-top: 20px;
+  padding: 12px 24px;
+}
+
+/* Modal styling */
+.modal-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.modal-title {
+  color: #2a3f54;
   font-weight: 600;
-  color: #495057;
 }
 
-.person-manager-card .badge {
-  font-size: 0.85rem;
-  padding: 0.35em 0.65em;
+/* Alert styling */
+.alert-success {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+  border-radius: 8px;
 }
 
-.person-manager-card .btn-success {
-  background-color: #28a745;
-  border-color: #28a745;
-}
-
-.person-manager-card .btn-success:hover {
-  background-color: #218838;
-  border-color: #1e7e34;
-}
-
-.person-manager-card .btn-outline-primary:hover {
-  background-color: #007bff;
-  color: white;
-}
-
-.person-manager-card .btn-outline-secondary:hover {
-  background-color: #6c757d;
-  color: white;
-}
-
-.person-manager-card .btn-outline-success:hover {
-  background-color: #28a745;
-  color: white;
-}
-
-.person-manager-card .btn-outline-danger:hover {
-  background-color: #dc3545;
-  color: white;
-}
-
-.person-manager-card .table-secondary {
-  opacity: 0.8;
-}
-
-.person-manager-card .text-muted {
-  font-size: 0.9rem;
-  color: #6c757d;
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .person-manager {
+    padding: 10px;
+  }
+  
+  .person-manager .card-body {
+    padding: 15px;
+  }
+  
+  .person-table th, 
+  .person-table td {
+    padding: 10px;
+  }
 } 

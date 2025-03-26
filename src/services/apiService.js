@@ -245,6 +245,23 @@ export const incomeApi = {
     }
   },
   
+  toggle: async (id) => {
+    if (!API_AVAILABLE) {
+      throw new Error('API not available');
+    }
+    
+    try {
+      const response = await fetch(`${API_URL}/incomes/${id}/toggle`, getFetchOptions({
+        method: 'PATCH',
+      }));
+      return handleResponse(response);
+    } catch (error) {
+      logApiError(`Error toggling income ${id}:`, error);
+      API_AVAILABLE = false;
+      throw error;
+    }
+  },
+  
   delete: async (id) => {
     if (!API_AVAILABLE) {
       throw new Error('API not available');

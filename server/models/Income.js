@@ -37,6 +37,11 @@ const Income = sequelize.define('income', {
     allowNull: false,
     defaultValue: 0.25,
   },
+  active: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
+  },
   clientId: {
     type: DataTypes.STRING,
     allowNull: true,

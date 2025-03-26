@@ -1,0 +1,47 @@
+.action-menu-container {
+  position: relative;
+}
+
+.action-menu-button {
+  border: none;
+  background: transparent;
+  color: #6c757d;
+  padding: 0.2rem 0.5rem;
+  transition: all 0.2s;
+  z-index: 1;
+}
+
+.action-menu-button:hover,
+.action-menu-button:focus {
+  color: #212529;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.action-menu-popover {
+  min-width: 140px;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
+  border-radius: 0.5rem;
+  border: none;
+  z-index: 1060 !important;
+}
+
+.action-menu-popover .popover-body {
+  padding: 0.5rem;
+}
+
+.action-button {
+  font-size: 0.85rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.3rem;
+  transition: all 0.15s ease-in-out;
+  margin-bottom: 0.25rem;
+}
+
+.action-button:last-child {
+  margin-bottom: 0;
+}
+
+.action-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+} 

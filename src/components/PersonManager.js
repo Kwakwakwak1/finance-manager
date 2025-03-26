@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Form, Button, Row, Col, ListGroup, Alert, Table, Modal, Badge } from 'react-bootstrap';
+import ActionMenu from './ActionMenu';
 import './PersonManager.css';
 
 const PersonManager = ({ 
@@ -138,7 +139,16 @@ const PersonManager = ({
   
   // Handle delete person
   const handleDelete = (id) => {
-    onDelete(id);
+    if (window.confirm('Are you sure you want to delete this person? This will not delete their expenses or incomes.')) {
+      onDelete(id);
+      setSuccessMessage('Person deleted successfully');
+      setShowSuccess(true);
+      
+      // Hide success message after 3 seconds
+      setTimeout(() => {
+        setShowSuccess(false);
+      }, 3000);
+    }
   };
   
   // Handle save as default
@@ -169,120 +179,82 @@ const PersonManager = ({
   ])].filter(name => name && !persons.some(p => p.name === name));
 
   return (
-    <div>
-      <Card className="person-manager-card mb-4">
-        <Card.Body>
-          <Card.Title className="d-flex justify-content-between align-items-center">
-            <span>Manage Persons</span>
-            <Button 
-              variant="primary" 
-              onClick={handleShowAddForm}
-            >
-              <i className="bi bi-plus-circle me-2"></i>
-              Add New Person
-            </Button>
-          </Card.Title>
-          
-          {showSuccess && (
-            <Alert variant="success" className="mt-3">
-              {successMessage}
-            </Alert>
-          )}
-          
-          <Table striped bordered hover responsive className="mt-4">
+    <div className="person-manager">
+      <h2 className="mb-4">Manage Persons</h2>
+      
+      {showSuccess && (
+        <Alert variant="success" className="mb-4">
+          {successMessage}
+        </Alert>
+      )}
+      
+      <Card className="mb-4">
+        <Card.Header className="d-flex justify-content-between align-items-center">
+          <h4 className="mb-0">Person List</h4>
+          <Button 
+            variant="primary" 
+            size="sm"
+            onClick={handleShowAddForm}
+          >
+            <i className="bi bi-plus-lg me-1"></i> Add New Person
+          </Button>
+        </Card.Header>
+        <Card.Body className="p-0">
+          <Table responsive hover className="person-table mb-0">
             <thead>
               <tr>
                 <th>Name</th>
                 <th>Description</th>
                 <th>Status</th>
                 <th>Data</th>
-                <th>Actions</th>
+                <th className="text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
               {persons.map(person => (
                 <tr key={person.id} className={!person.isActive ? 'table-secondary' : ''}>
-                  <td>{person.name}</td>
+                  <td className="fw-medium">{person.name}</td>
                   <td>{person.description}</td>
                   <td>
-                    {person.isActive ? (
-                      <Badge bg="success">Active</Badge>
-                    ) : (
-                      <Badge bg="secondary">Hidden</Badge>
-                    )}
+                    <Badge bg={person.isActive ? "success" : "secondary"} className="status-badge">
+                      {person.isActive ? 'Active' : 'Hidden'}
+                    </Badge>
                   </td>
                   <td>
-                    <Badge bg="primary" className="me-2">
+                    <Badge bg="primary" className="data-badge me-2">
                       {expenseCounts[person.name] || 0} expenses
                     </Badge>
-                    <Badge bg="info">
+                    <Badge bg="info" className="data-badge">
                       {incomeCounts[person.name] || 0} incomes
                     </Badge>
                   </td>
-                  <td>
-                    <Button 
-                      variant="outline-primary" 
-                      size="sm" 
-                      className="me-2"
-                      onClick={() => handleShowEditForm(person)}
-                    >
-                      <i className="bi bi-pencil"></i>
-                    </Button>
-                    <Button 
-                      variant={person.isActive ? "outline-secondary" : "outline-success"} 
-                      size="sm" 
-                      className="me-2"
-                      onClick={() => handleToggleActive(person.id)}
-                      title={person.isActive ? "Hide person" : "Show person"}
-                    >
-                      <i className={`bi ${person.isActive ? "bi-eye-slash" : "bi-eye"}`}></i>
-                    </Button>
-                    <Button 
-                      variant="outline-danger" 
-                      size="sm"
-                      onClick={() => handleDelete(person.id)}
-                    >
-                      <i className="bi bi-trash"></i>
-                    </Button>
+                  <td className="text-center">
+                    <ActionMenu 
+                      onEdit={() => handleShowEditForm(person)}
+                      onDelete={() => handleDelete(person.id)}
+                      onToggle={() => handleToggleActive(person.id)}
+                      isActive={person.isActive}
+                    />
                   </td>
                 </tr>
               ))}
             </tbody>
           </Table>
-          
-          {uniquePersonNames.length > 0 && (
-            <div className="mt-4">
-              <h5>Persons found in expenses/incomes but not registered:</h5>
-              <ul className="list-group">
-                {uniquePersonNames.map(name => (
-                  <li key={name} className="list-group-item d-flex justify-content-between align-items-center">
-                    {name}
-                    <Button 
-                      variant="outline-primary" 
-                      size="sm"
-                      onClick={() => {
-                        setFormData({
-                          name,
-                          description: '',
-                          isActive: true,
-                        });
-                        setShowForm(true);
-                      }}
-                    >
-                      Register
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          
-          <div className="mt-4">
-            <h5>Legacy Name Update</h5>
-            <p className="text-muted">Update a person's name across all expenses and incomes. This is for backward compatibility only.</p>
-            <Form onSubmit={handleNameUpdate} className="row">
-              <Col md={4}>
-                <Form.Group className="mb-3">
+        </Card.Body>
+      </Card>
+
+      <Card className="mb-4">
+        <Card.Header>
+          <h4 className="mb-0">Legacy Name Update</h4>
+        </Card.Header>
+        <Card.Body>
+          <p className="text-muted mb-3">
+            Update a person's name across all expenses and incomes. This is for backward compatibility only.
+          </p>
+          <Form onSubmit={handleNameUpdate}>
+            <Row className="align-items-end">
+              <Col md={4} className="mb-3 mb-md-0">
+                <Form.Group>
                   <Form.Label>Select Person</Form.Label>
                   <Form.Select
                     value={selectedPerson}
@@ -293,12 +265,14 @@ const PersonManager = ({
                     {persons.map(person => (
                       <option key={person.id} value={person.name}>{person.name}</option>
                     ))}
+                    {uniquePersonNames.map(name => (
+                      <option key={name} value={name}>{name} (not in person list)</option>
+                    ))}
                   </Form.Select>
                 </Form.Group>
               </Col>
-              
-              <Col md={4}>
-                <Form.Group className="mb-3">
+              <Col md={4} className="mb-3 mb-md-0">
+                <Form.Group>
                   <Form.Label>New Name</Form.Label>
                   <Form.Control
                     type="text"
@@ -309,33 +283,29 @@ const PersonManager = ({
                   />
                 </Form.Group>
               </Col>
-              
-              <Col md={4} className="d-flex align-items-end">
-                <Button 
-                  variant="primary" 
-                  type="submit"
-                  className="mb-3"
-                  disabled={!selectedPerson || !newName}
-                >
+              <Col md={4}>
+                <Button type="submit" variant="primary" className="w-100">
                   Update Person Name
                 </Button>
               </Col>
-            </Form>
-          </div>
-          
-          <div className="mt-4">
-            <Button 
-              variant="success" 
-              onClick={handleSaveAsDefault}
-            >
-              <i className="bi bi-save me-2"></i>
-              Save Current Data as Default
-            </Button>
-          </div>
+            </Row>
+          </Form>
         </Card.Body>
       </Card>
       
-      {/* Person Add/Edit Form Modal */}
+      <div className="d-grid">
+        <Button 
+          variant="success" 
+          size="lg" 
+          onClick={handleSaveAsDefault}
+          className="save-default-btn"
+        >
+          <i className="bi bi-download me-2"></i>
+          Save Current Data as Default
+        </Button>
+      </div>
+
+      {/* Person Form Modal */}
       <Modal show={showForm} onHide={handleCloseForm}>
         <Modal.Header closeButton>
           <Modal.Title>{editMode ? 'Edit Person' : 'Add New Person'}</Modal.Title>
@@ -346,7 +316,7 @@ const PersonManager = ({
               <Form.Label>Name</Form.Label>
               <Form.Control
                 type="text"
-                placeholder="Enter person name"
+                placeholder="Enter name"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
@@ -357,9 +327,8 @@ const PersonManager = ({
             <Form.Group className="mb-3">
               <Form.Label>Description</Form.Label>
               <Form.Control
-                as="textarea"
-                rows={3}
-                placeholder="Enter person description (optional)"
+                type="text"
+                placeholder="E.g. Father, Mother, Son, etc."
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
@@ -369,18 +338,15 @@ const PersonManager = ({
             <Form.Group className="mb-3">
               <Form.Check
                 type="checkbox"
-                label="Person is active"
+                label="Active (visible in filters and dropdowns)"
                 name="isActive"
                 checked={formData.isActive}
                 onChange={handleChange}
               />
-              <Form.Text className="text-muted">
-                Inactive persons will not be displayed in expense and income lists, but their data will be preserved.
-              </Form.Text>
             </Form.Group>
             
             <div className="d-flex justify-content-end">
-              <Button variant="secondary" onClick={handleCloseForm} className="me-2">
+              <Button variant="secondary" className="me-2" onClick={handleCloseForm}>
                 Cancel
               </Button>
               <Button variant="primary" type="submit">

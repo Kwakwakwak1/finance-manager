@@ -17,4 +17,7 @@ router.put('/:id', incomeController.updateIncome);
 // DELETE income
 router.delete('/:id', incomeController.deleteIncome);
 
+// PATCH toggle income active state
+router.patch('/:id/toggle', incomeController.toggleIncome);
+
 module.exports = router;
