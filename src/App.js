@@ -719,7 +719,7 @@ function App() {
                 {!apiConnected && (
                   <div className="alert alert-warning mt-3">
                     <h4>API Connection Issue</h4>
-                    <p>Unable to connect to the finance server API. Using local data only.</p>
+                    <p>Unable!!! to connect to the finance server API. Using local data only.</p>
                   </div>
                 )}
                 
