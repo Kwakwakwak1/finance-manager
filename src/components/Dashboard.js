@@ -50,13 +50,25 @@ const Dashboard = ({ expenses, incomes }) => {
     filterDataBySelectedUsers 
   } = useFilter();
 
-  // Use the global plans context
+  // Use the global plans context with fallback values to prevent errors
+  const plansContext = usePlans();
+  
+  // Log for debugging
+  useEffect(() => {
+    if (!plansContext) {
+      console.warn('Dashboard: Plans context is not available');
+    } else {
+      console.log('Dashboard: Plans context loaded successfully', 
+        { plansCount: plansContext.plans?.length || 0 });
+    }
+  }, [plansContext]);
+  
   const { 
-    plans, 
-    activePlanIds, 
-    calculatePlanImpact,
-    getActivePlans
-  } = usePlans();
+    plans = [], 
+    activePlanIds = [], 
+    calculatePlanImpact = () => ({ monthlySavings: 0, annualSavings: 0 }),
+    getActivePlans = () => []
+  } = plansContext || {};
 
   // Update available users when expenses or incomes change
   useEffect(() => {

@@ -12,11 +12,28 @@ export const PlansProvider = ({ children, expenses, incomes }) => {
   const [plans, setPlans] = useState([]);
   const [activePlanIds, setActivePlanIds] = useState([]);
 
+  // Debug logging for provider 
+  useEffect(() => {
+    console.log('PlansProvider initialized', { 
+      hasExpenses: Boolean(expenses?.length),
+      hasIncomes: Boolean(incomes?.length)
+    });
+  }, [expenses, incomes]);
+
   // Load plans from localStorage on component mount
   useEffect(() => {
     const savedPlans = localStorage.getItem('financialPlans');
     if (savedPlans) {
-      setPlans(JSON.parse(savedPlans));
+      try {
+        const parsedPlans = JSON.parse(savedPlans);
+        setPlans(parsedPlans);
+        console.log(`PlansProvider: Loaded ${parsedPlans.length} plans from localStorage`);
+      } catch (error) {
+        console.error('PlansProvider: Error parsing saved plans:', error);
+        localStorage.removeItem('financialPlans');
+      }
+    } else {
+      console.log('PlansProvider: No saved plans found in localStorage');
     }
   }, []);
 
@@ -27,22 +44,36 @@ export const PlansProvider = ({ children, expenses, incomes }) => {
 
   // Create a new financial plan
   const createPlan = (name, description = '') => {
-    const newPlan = {
-      id: uuidv4(),
-      name,
-      description,
-      createdAt: new Date().toISOString(),
-      expenses: expenses.map(expense => ({
-        ...expense,
-        enabled: true
-      })),
-      incomes: incomes.map(income => ({
-        ...income,
-        enabled: true
-      }))
-    };
-    setPlans([...plans, newPlan]);
-    return newPlan.id;
+    try {
+      if (!Array.isArray(expenses) || !Array.isArray(incomes)) {
+        console.error("Cannot create plan: expenses or incomes are not arrays", {
+          expenses,
+          incomes
+        });
+        return null;
+      }
+      
+      const newPlan = {
+        id: uuidv4(),
+        name,
+        description,
+        createdAt: new Date().toISOString(),
+        expenses: expenses.map(expense => ({
+          ...expense,
+          enabled: true
+        })),
+        incomes: incomes.map(income => ({
+          ...income,
+          enabled: true
+        }))
+      };
+      setPlans([...plans, newPlan]);
+      console.log('Plan created successfully:', newPlan.name);
+      return newPlan.id;
+    } catch (error) {
+      console.error('Error creating plan:', error);
+      return null;
+    }
   };
 
   // Update an existing plan
@@ -158,6 +189,7 @@ export const PlansProvider = ({ children, expenses, incomes }) => {
 
   const value = {
     plans,
+    setPlans,
     activePlanIds,
     createPlan,
     updatePlan,
@@ -169,9 +201,17 @@ export const PlansProvider = ({ children, expenses, incomes }) => {
     getActivePlans
   };
 
+  // Debug information before rendering
+  console.log('PlansProvider rendering with value:', {
+    hasPlans: Boolean(plans.length),
+    hasActivePlans: Boolean(activePlanIds.length),
+    isChildrenFunction: typeof children === 'function'
+  });
+
+  // Always provide the context values to all children
   return (
     <PlansContext.Provider value={value}>
-      {children}
+      {typeof children === 'function' ? children(value) : children}
     </PlansContext.Provider>
   );
 }; 

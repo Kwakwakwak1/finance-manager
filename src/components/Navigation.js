@@ -34,7 +34,7 @@ const Navigation = ({ activeTab, setActiveTab }) => {
               onClick={() => setActiveTab('income')}
               className="nav-link"
             >
-              <i className="bi bi-cash"></i> Income
+              <i className="bi bi-cash"></i> Incomes
             </Nav.Link>
             <Nav.Link 
               href="#manage-people" 
@@ -42,7 +42,7 @@ const Navigation = ({ activeTab, setActiveTab }) => {
               onClick={() => setActiveTab('manage-people')}
               className="nav-link"
             >
-              <i className="bi bi-people"></i> Manage People
+              <i className="bi bi-people"></i> Persons
             </Nav.Link>
             <Nav.Link 
               href="#plans" 
@@ -50,7 +50,15 @@ const Navigation = ({ activeTab, setActiveTab }) => {
               onClick={() => setActiveTab('plans')}
               className="nav-link"
             >
-              <i className="bi bi-bar-chart-line"></i> Financial Plans
+              <i className="bi bi-bar-chart-line"></i> Plans & Goals
+            </Nav.Link>
+            <Nav.Link 
+              href="#settings" 
+              active={activeTab === 'settings'}
+              onClick={() => setActiveTab('settings')}
+              className="nav-link"
+            >
+              <i className="bi bi-gear"></i> Settings
             </Nav.Link>
           </Nav>
         </Navbar.Collapse>

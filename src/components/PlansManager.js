@@ -5,17 +5,30 @@ import { calculateMonthlyAmount } from '../data/expenseData';
 import './PlansManager.css';
 
 const PlansManager = ({ expenses, incomes }) => {
+  // Get the plans context with fallbacks to prevent errors
+  const plansContext = usePlans();
+  
+  // Log for debugging
+  useEffect(() => {
+    if (!plansContext) {
+      console.warn('PlansManager: Plans context is not available');
+    } else {
+      console.log('PlansManager: Plans context loaded successfully', 
+        { plansCount: plansContext.plans?.length || 0 });
+    }
+  }, [plansContext]);
+  
   const { 
-    plans, 
-    activePlanIds,
-    createPlan, 
-    updatePlan, 
-    deletePlan, 
-    togglePlanExpense, 
-    togglePlanIncome,
-    togglePlanVisibility,
-    calculatePlanImpact
-  } = usePlans();
+    plans = [], 
+    activePlanIds = [],
+    createPlan = () => null, 
+    updatePlan = () => {}, 
+    deletePlan = () => {}, 
+    togglePlanExpense = () => {}, 
+    togglePlanIncome = () => {},
+    togglePlanVisibility = () => {},
+    calculatePlanImpact = () => ({ monthlySavings: 0, annualSavings: 0 })
+  } = plansContext || {};
 
   const [showNewPlanModal, setShowNewPlanModal] = useState(false);
   const [newPlanName, setNewPlanName] = useState('');

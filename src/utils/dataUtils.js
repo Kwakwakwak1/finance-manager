@@ -118,4 +118,112 @@ export const updateExpenseDataFile = async (expenses, incomes = []) => {
     console.error('Error updating financial data file:', error);
     return false;
   }
+};
+
+/**
+ * Validates data against the expected schema for import/export
+ * @param {Object} data - The data to validate
+ * @returns {Object} - Object with isValid boolean and errors array
+ */
+export const validateData = (data) => {
+  const errors = [];
+  
+  // Check if data is an object
+  if (!data || typeof data !== 'object') {
+    return { isValid: false, errors: ['Invalid data format: Not a valid JSON object'] };
+  }
+  
+  // Validate expenses
+  if (data.expenses) {
+    if (!Array.isArray(data.expenses)) {
+      errors.push('Expenses must be an array');
+    } else {
+      data.expenses.forEach((expense, index) => {
+        if (!expense.id) errors.push(`Expense #${index + 1} is missing an ID`);
+        if (!expense.amount && expense.amount !== 0) errors.push(`Expense #${index + 1} is missing an amount`);
+        if (!expense.title && !expense.name) errors.push(`Expense #${index + 1} is missing a name/title`);
+      });
+    }
+  } else {
+    errors.push('Missing expenses data');
+  }
+  
+  // Validate incomes
+  if (data.incomes) {
+    if (!Array.isArray(data.incomes)) {
+      errors.push('Incomes must be an array');
+    } else {
+      data.incomes.forEach((income, index) => {
+        if (!income.id) errors.push(`Income #${index + 1} is missing an ID`);
+        if (!income.amount && income.amount !== 0) errors.push(`Income #${index + 1} is missing an amount`);
+        if (!income.source) errors.push(`Income #${index + 1} is missing a source`);
+      });
+    }
+  } else {
+    errors.push('Missing incomes data');
+  }
+  
+  // Validate persons
+  if (data.persons) {
+    if (!Array.isArray(data.persons)) {
+      errors.push('Persons must be an array');
+    } else {
+      data.persons.forEach((person, index) => {
+        if (!person.id) errors.push(`Person #${index + 1} is missing an ID`);
+        if (!person.name) errors.push(`Person #${index + 1} is missing a name`);
+      });
+    }
+  } else {
+    errors.push('Missing persons data');
+  }
+  
+  // Validate goals (optional)
+  if (data.goals && !Array.isArray(data.goals)) {
+    errors.push('Goals must be an array');
+  }
+  
+  // Validate plans (optional)
+  if (data.plans) {
+    if (!Array.isArray(data.plans)) {
+      errors.push('Plans must be an array');
+    } else {
+      data.plans.forEach((plan, index) => {
+        if (!plan.id) errors.push(`Plan #${index + 1} is missing an ID`);
+        if (!plan.name) errors.push(`Plan #${index + 1} is missing a name`);
+        
+        // Validate expenses within plan
+        if (plan.expenses) {
+          if (!Array.isArray(plan.expenses)) {
+            errors.push(`Plan #${index + 1} has invalid expenses format`);
+          } else {
+            plan.expenses.forEach((expense, expIndex) => {
+              if (!expense.id) errors.push(`Plan #${index + 1}, Expense #${expIndex + 1} is missing an ID`);
+              if (expense.enabled === undefined) errors.push(`Plan #${index + 1}, Expense #${expIndex + 1} is missing enabled status`);
+            });
+          }
+        } else {
+          errors.push(`Plan #${index + 1} is missing expenses array`);
+        }
+        
+        // Validate incomes within plan
+        if (plan.incomes) {
+          if (!Array.isArray(plan.incomes)) {
+            errors.push(`Plan #${index + 1} has invalid incomes format`);
+          } else {
+            plan.incomes.forEach((income, incIndex) => {
+              if (!income.id) errors.push(`Plan #${index + 1}, Income #${incIndex + 1} is missing an ID`);
+              if (income.enabled === undefined) errors.push(`Plan #${index + 1}, Income #${incIndex + 1} is missing enabled status`);
+            });
+          }
+        } else {
+          errors.push(`Plan #${index + 1} is missing incomes array`);
+        }
+      });
+    }
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
 }; 

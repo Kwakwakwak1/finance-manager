@@ -11,9 +11,10 @@ import ExpenseList from './components/ExpenseList';
 import PersonManager from './components/PersonManager';
 import IncomeManager from './components/IncomeManager';
 import PlansManager from './components/PlansManager';
+import DataManagement from './components/settings/DataManagement';
 import { defaultFinancialData } from './data/expenseData';
 import { formatExpensesForFile } from './utils/dataUtils';
-import { updateExpenseDataFile } from './services/fileService';
+import { updateExpenseDataFile, createBackup } from './services/fileService';
 import { FilterProvider } from './context/FilterContext';
 import { PlansProvider } from './context/PlansContext';
 import { expenseApi, incomeApi, goalApi, personApi, checkApiAvailability } from './services/apiService';
@@ -30,6 +31,9 @@ function App() {
 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showImportedData, setShowImportedData] = useState(true); // Set to true since we're now using the default data
+
+  // Add a new state for settings tab
+  const [settingsActiveKey, setSettingsActiveKey] = useState('data-management');
 
   // Fetch data from API on component mount
   useEffect(() => {
@@ -660,112 +664,140 @@ function App() {
     return persons.filter(person => person.isActive).map(person => person.name);
   }, [persons]);
 
+  // Add a function to handle data backup before destructive operations
+  const backupData = async () => {
+    try {
+      const backupSuccessful = await createBackup({ expenses, incomes, persons, goals });
+      if (!backupSuccessful) {
+        console.warn('Failed to create backup before operation');
+      }
+      return backupSuccessful;
+    } catch (err) {
+      console.error('Error creating backup:', err);
+      return false;
+    }
+  };
+
   return (
     <FilterProvider>
       <PlansProvider expenses={expenses} incomes={incomes}>
-        <div className="app">
-          <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
+        {({plans, setPlans}) => {
+          console.log('App: Received plans and setPlans from PlansProvider render props', { 
+            plansCount: plans?.length || 0 
+          });
           
-          <Container className="main-container">
-            {error && (
-              <div className="alert alert-warning alert-dismissible fade show" role="alert">
-                <strong>Notice:</strong> {error}
-                <button type="button" className="btn-close" onClick={() => setError(null)} aria-label="Close"></button>
-              </div>
-            )}
-            
-            {!apiConnected && (
-              <div className="alert alert-info mb-3">
-                <i className="bi bi-cloud-slash me-2"></i>
-                <strong>Offline Mode:</strong> You're working with local data stored in your browser.
-                All changes will be saved locally, but won't sync with any server.
-              </div>
-            )}
-            
-            {activeTab === 'dashboard' && (
-              <Dashboard expenses={expenses} incomes={incomes} activePersons={activePersons} />
-            )}
-            
-            {activeTab === 'expenses' && (
-              <div>
-                <h2 className="mb-4">Expense Tracker</h2>
-                <ExpenseList
-                  expenses={expenses}
-                  onDelete={deleteExpense}
-                  onToggle={toggleExpense}
-                  onEdit={editExpense}
-                  activePersons={activePersons}
-                />
-              </div>
-            )}
-            
-            {activeTab === 'income' && (
-              <IncomeManager
-                incomes={incomes}
-                onAdd={addIncome}
-                onUpdate={updateIncome}
-                onDelete={deleteIncome}
-                onToggle={toggleIncome}
-                existingPersons={uniquePersons}
-                activePersons={activePersons}
-              />
-            )}
-            
-            {activeTab === 'manage-people' && (
-              <PersonManager
-                expenses={expenses}
-                incomes={incomes}
-                persons={persons}
-                updatePersonName={updatePersonName}
-                saveAsDefault={saveAsDefault}
-                onAdd={addPerson}
-                onUpdate={updatePerson}
-                onDelete={deletePerson}
-                onToggleActive={togglePersonActive}
-              />
-            )}
-            
-            {activeTab === 'plans' && (
-              <PlansManager expenses={expenses} incomes={incomes} />
-            )}
-            
-            {activeTab === 'settings' && (
-              <div className="settings-container">
-                <h2 className="mb-4">Settings</h2>
-                <div className="settings-section">
-                  <h3>Data Management</h3>
-                  <div className="settings-actions">
-                    <button onClick={importDefaultData} className="btn btn-secondary">
-                      Import Default Data
-                    </button>
-                    <button onClick={saveAsDefault} className="btn btn-primary">
-                      Save Current Data as Default
-                    </button>
-                    <button onClick={clearExpenses} className="btn btn-danger">
-                      Clear All Data
-                    </button>
+          return (
+            <div className="app">
+              <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
+              
+              <Container className="main-container">
+                {error && (
+                  <div className="alert alert-warning alert-dismissible fade show" role="alert">
+                    <strong>Notice:</strong> {error}
+                    <button type="button" className="btn-close" onClick={() => setError(null)} aria-label="Close"></button>
                   </div>
+                )}
+                
+                {!apiConnected && (
+                  <div className="alert alert-info mb-3">
+                    <i className="bi bi-cloud-slash me-2"></i>
+                    <strong>Offline Mode:</strong> You're working with local data stored in your browser.
+                    All changes will be saved locally, but won't sync with any server.
+                  </div>
+                )}
+                
+                <div className="content-container">
+                  {activeTab === 'dashboard' && (
+                    <Dashboard 
+                      expenses={expenses} 
+                      incomes={incomes} 
+                      activePersons={activePersons}
+                    />
+                  )}
+                  
+                  {activeTab === 'expenses' && (
+                    <FilterProvider>
+                      <div className="expenses-container">
+                        <ExpenseForm
+                          addExpense={addExpense}
+                          persons={persons}
+                        />
+                        <ExpenseList
+                          expenses={expenses}
+                          onDelete={deleteExpense}
+                          onToggle={toggleExpense}
+                          onEdit={editExpense}
+                          activePersons={activePersons}
+                        />
+                      </div>
+                    </FilterProvider>
+                  )}
+                  
+                  {activeTab === 'income' && (
+                    <IncomeManager
+                      incomes={incomes}
+                      onAdd={addIncome}
+                      onUpdate={updateIncome}
+                      onDelete={deleteIncome}
+                      onToggle={toggleIncome}
+                      existingPersons={uniquePersons}
+                      activePersons={activePersons}
+                    />
+                  )}
+                  
+                  {activeTab === 'manage-people' && (
+                    <PersonManager
+                      expenses={expenses}
+                      incomes={incomes}
+                      persons={persons}
+                      updatePersonName={updatePersonName}
+                      saveAsDefault={saveAsDefault}
+                      onAdd={addPerson}
+                      onUpdate={updatePerson}
+                      onDelete={deletePerson}
+                      onToggleActive={togglePersonActive}
+                    />
+                  )}
+                  
+                  {activeTab === 'plans' && (
+                    <PlansManager expenses={expenses} incomes={incomes} />
+                  )}
+                  
+                  {activeTab === 'settings' && (
+                    <Tabs
+                      activeKey={settingsActiveKey}
+                      onSelect={(k) => setSettingsActiveKey(k)}
+                      className="mb-4"
+                      variant="pills"
+                    >
+                      <Tab eventKey="data-management" title="Data Management">
+                        <DataManagement
+                          expenses={expenses}
+                          incomes={incomes}
+                          persons={persons}
+                          goals={goals}
+                          plans={plans}
+                          setExpenses={setExpenses}
+                          setIncomes={setIncomes}
+                          setPersons={setPersons}
+                          setGoals={setGoals}
+                          setPlans={setPlans}
+                        />
+                      </Tab>
+                      {/* Add more settings tabs as needed */}
+                    </Tabs>
+                  )}
                 </div>
-                <div className="settings-info">
-                  <p>
-                    {showImportedData && expenses.length > 0 ? 
-                      'You are currently using imported sample data. Feel free to modify or add expenses.' :
-                      'You are using your own data. You can always import sample data if needed.'}
-                  </p>
-                  <p>
-                    <strong>Note:</strong> All data is stored locally in your browser.
-                  </p>
-                </div>
-              </div>
-            )}
-          </Container>
-          
-          <footer className="footer mt-auto py-3">
-            <Container>
-              <p className="text-center text-muted">&copy; {new Date().getFullYear()} Financial Manager</p>
-            </Container>
-          </footer>
-        </div>
+              </Container>
+              
+              <footer className="footer mt-auto py-3">
+                <Container>
+                  <p className="text-center text-muted">&copy; {new Date().getFullYear()} Financial Manager</p>
+                </Container>
+              </footer>
+            </div>
+          );
+        }}
       </PlansProvider>
     </FilterProvider>
   );
