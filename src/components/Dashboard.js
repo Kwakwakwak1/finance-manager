@@ -34,7 +34,7 @@ ChartJS.register(
   Legend
 );
 
-const Dashboard = ({ expenses, incomes }) => {
+const Dashboard = ({ expenses, incomes, setActiveTab }) => {
   const [categoryData, setCategoryData] = useState({ labels: [], data: [] });
   const [monthlyData, setMonthlyData] = useState({ labels: [], data: [] });
   const [personIncomeExpenseData, setPersonIncomeExpenseData] = useState({});
@@ -535,7 +535,7 @@ const Dashboard = ({ expenses, incomes }) => {
                 <Button 
                   variant="outline-primary" 
                   size="sm"
-                  href="#plans"
+                  onClick={() => setActiveTab('plans')}
                 >
                   Manage Plans
                 </Button>

@@ -729,6 +729,7 @@ function App() {
                       expenses={expenses} 
                       incomes={incomes} 
                       activePersons={activePersons}
+                      setActiveTab={setActiveTab}
                     />
                   )}
                   

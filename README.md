@@ -1,5 +1,7 @@
 # Finance Manager
 
+cd .. && docker restart finance-manager
+
 A modern web application for managing personal finances, built with React and Bootstrap. This application helps users track their expenses, visualize their spending patterns, and manage their financial goals.
 
 ## Features
