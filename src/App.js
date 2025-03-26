@@ -27,7 +27,7 @@ function App() {
   const [persons, setPersons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [apiConnected, setApiConnected] = useState(true);
+  const [apiConnected, setApiConnected] = useState(false);
 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showImportedData, setShowImportedData] = useState(true); // Set to true since we're now using the default data
@@ -40,11 +40,21 @@ function App() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // First check if the API is available
-        const isApiAvailable = await checkApiAvailability();
-        setApiConnected(isApiAvailable);
+        // Test API connection
+        fetch(`${process.env.REACT_APP_API_URL || ''}/api/health`)
+          .then(response => {
+            if (response.ok) {
+              setApiConnected(true);
+            } else {
+              setApiConnected(false);
+            }
+          })
+          .catch(error => {
+            console.error('API connection error:', error);
+            setApiConnected(false);
+          });
         
-        if (isApiAvailable) {
+        if (apiConnected) {
           // Load data from API
           const [expensesData, incomesData, goalsData, personsData] = await Promise.all([
             expenseApi.getAll(),
@@ -699,10 +709,17 @@ function App() {
                 )}
                 
                 {!apiConnected && (
-                  <div className="alert alert-info mb-3">
+                  <div className="alert alert-warning mb-3">
                     <i className="bi bi-cloud-slash me-2"></i>
                     <strong>Offline Mode:</strong> You're working with local data stored in your browser.
                     All changes will be saved locally, but won't sync with any server.
+                  </div>
+                )}
+                
+                {!apiConnected && (
+                  <div className="alert alert-warning mt-3">
+                    <h4>API Connection Issue</h4>
+                    <p>Unable to connect to the finance server API. Using local data only.</p>
                   </div>
                 )}
                 
